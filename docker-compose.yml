@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # Hệ thống nguồn (EMR Source Database)
+  emr-db:
+    image: postgres:15-alpine
+    container_name: emr-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: his_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./infrastructure/postgres_data:/var/lib/postgresql/data
+
+  # Message Broker (RabbitMQ)
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: emr-rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"   # Cổng giao tiếp dữ liệu
+      - "15672:15672" # Cổng giao diện quản lý (Management UI)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  # Hệ thống đích (FHIR Store)
+  fhir-store:
+    image: mongo:latest
+    container_name: emr-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./infrastructure/mongo_data:/data/db
+
+  # Công cụ xem dữ liệu MongoDB 
+  mongo-express:
+    image: mongo-express
+    container_name: emr-mongo-ui
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_SERVER: fhir-store
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: pass123
+
+networks:
+  default:
+    name: emr-fhir-network
+    
