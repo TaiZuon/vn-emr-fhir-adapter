@@ -11,3 +11,6 @@ pydantic
 streamlit
 python-dotenv
 faker
+# Coding convention
+black
+pycodestyle
