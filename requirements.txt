@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+jinja2
+python-multipart
+sqlalchemy
+psycopg2-binary
+pymongo
+pika
+fhir.resources
+pydantic
+streamlit
+python-dotenv
+faker
