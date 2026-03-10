@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Hệ thống nguồn (EMR Source Database)
   emr-db:
@@ -14,6 +12,7 @@ services:
       - "5432:5432"
     volumes:
       - ./infrastructure/postgres_data:/var/lib/postgresql/data
+      - ./emr-provider-system/database/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   # Message Broker (RabbitMQ)
   rabbitmq:
