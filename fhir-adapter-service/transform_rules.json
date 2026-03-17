@@ -1,0 +1,28 @@
+{
+  "patients": {
+    "resource_type": "Patient",
+    "rules": [
+      { "source": "id", "target": "id", "action": "direct" },
+      { "source": "patient_external_id", "target": "identifier[0].value", "action": "direct" },
+      { "source": "full_name", "target": "name[0].text", "action": "direct" },
+      { 
+        "source": "gender", 
+        "target": "gender", 
+        "action": "lookup", 
+        "map": { "Nam": "male", "Nữ": "female", "Khác": "other" } 
+      },
+      { "source": "birth_date", "target": "birthDate", "action": "date" }
+    ]
+  },
+  "observations": {
+    "resource_type": "Observation",
+    "rules": [
+      { "source": "id", "target": "id", "action": "direct" },
+      { "source": "code_system", "target": "code.coding[0].code", "action": "direct" },
+      { "source": "code_display", "target": "code.coding[0].display", "action": "direct" },
+      { "source": "value_number", "target": "valueQuantity.value", "action": "float" },
+      { "source": "value_unit", "target": "valueQuantity.unit", "action": "direct" },
+      { "source": "patient_id", "target": "subject.reference", "action": "reference", "ref_type": "Patient" }
+    ]
+  }
+}

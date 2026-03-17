@@ -4,7 +4,7 @@ import models
 import schemas
 import database
 import publisher
-from constants import API_TITLE, EVENT_PATIENT_CREATED, RABBITMQ_QUEUE_NAME
+from constants import API_TITLE
 
 app = FastAPI(title=API_TITLE)
 
@@ -19,12 +19,24 @@ def create_patient(
     db.commit()
     db.refresh(db_patient)
 
-    # Bắn sự kiện sang RabbitMQ (Task 2.2)
-    event_data = {
-        "event_type": EVENT_PATIENT_CREATED,
-        "patient_id": db_patient.id,
-        "external_id": db_patient.patient_external_id,
-    }
-    publisher.publish_event(RABBITMQ_QUEUE_NAME, event_data)
+    # Chụp ảnh dữ liệu (Snapshot) cho Fat Message
+    # Lấy tự động tất cả các cột trong bảng patients
+    snapshot = {c.name: getattr(db_patient, c.name) for c in db_patient.__table__.columns}
+    
+    # Ép kiểu datetime sang chuỗi ISO 8601 để thư viện JSON có thể đọc được
+    if snapshot.get('birth_date'):
+        snapshot['birth_date'] = snapshot['birth_date'].isoformat()
+    if snapshot.get('created_at'):
+        snapshot['created_at'] = snapshot['created_at'].isoformat()
+    if snapshot.get('updated_at'):
+        snapshot['updated_at'] = snapshot['updated_at'].isoformat()
+
+    # Bắn sự kiện sang RabbitMQ theo chuẩn Debezium
+    # op='c' nghĩa là Create, table_name='patients' để báo cho Adapter biết dùng Rule nào
+    publisher.publish_event(
+        operation='c', 
+        table_name='patients', 
+        data_snapshot=snapshot
+    )
 
     return db_patient
