@@ -13,7 +13,7 @@ CREATE TABLE patients (
     patient_external_id VARCHAR(50) UNIQUE NOT NULL, -- Mã BN tại bệnh viện
     national_id VARCHAR(12) UNIQUE,                 -- Số CCCD (Định danh quốc gia)
     full_name VARCHAR(100) NOT NULL,
-    gender VARCHAR(10) CHECK (gender IN ('male', 'female', 'other')),
+    gender VARCHAR(10) CHECK (gender IN ('Nam', 'Nữ', 'Khác')),
     birth_date DATE NOT NULL,
     address TEXT,
     phone VARCHAR(20),
