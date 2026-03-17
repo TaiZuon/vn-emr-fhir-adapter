@@ -4,6 +4,7 @@ import time
 import sys
 from transform_engine import TransformEngine
 from reference_manager import ref_manager
+from validator import FHIRValidator
 
 # Khởi tạo Engine ánh xạ
 engine = TransformEngine("transform_rules.json")
@@ -36,8 +37,17 @@ def process_event(ch, method, properties, body):
         if fhir_resource:
             # 3. Reference & Store Module (Task 3.4 sẽ kết nối MongoDB thật)
             # Hiện tại giả lập ID MongoDB trả về
+            is_valid, error_msg = FHIRValidator.validate(fhir_resource)
+
+            if not is_valid:
+                print(f" [❌] Validation failed: {error_msg}")
+                ch.basic_ack(delivery_tag=method.delivery_tag)
+                return
+
             fhir_id = f"fhir_id_mock_{data['id']}" 
             
+            print(f" [✅] Validation thành công cho {fhir_resource.__class__.__name__} với ID: {fhir_id}")
+
             # Lưu vào cache tham chiếu để dùng cho các bản ghi liên quan sau này
             res_type = fhir_resource.__class__.__name__
             ref_manager.add_mapping(res_type, data['id'], fhir_id)
