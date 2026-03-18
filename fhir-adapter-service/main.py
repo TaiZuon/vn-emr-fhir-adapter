@@ -5,6 +5,7 @@ import sys
 from transform_engine import TransformEngine
 from reference_manager import ref_manager
 from validator import FHIRValidator
+from database_mongo import fhir_store
 
 # Khởi tạo Engine ánh xạ
 engine = TransformEngine("transform_rules.json")
@@ -36,21 +37,23 @@ def process_event(ch, method, properties, body):
 
         if fhir_resource:
             # 3. Reference & Store Module (Task 3.4 sẽ kết nối MongoDB thật)
-            # Hiện tại giả lập ID MongoDB trả về
             is_valid, error_msg = FHIRValidator.validate(fhir_resource)
-
+            res_type = fhir_resource.__class__.__name__
             if not is_valid:
                 print(f" [❌] Validation failed: {error_msg}")
                 ch.basic_ack(delivery_tag=method.delivery_tag)
                 return
-
-            fhir_id = f"fhir_id_mock_{data['id']}" 
             
-            print(f" [✅] Validation thành công cho {fhir_resource.__class__.__name__} với ID: {fhir_id}")
+            print(f" [✅] Validation thành công cho {fhir_resource.__class__.__name__}")
 
+            # fhir_id = f"fhir_id_mock_{data['id']}" 
+            mongo_id = fhir_store.save_resource(fhir_resource)
+
+            if mongo_id:
             # Lưu vào cache tham chiếu để dùng cho các bản ghi liên quan sau này
-            res_type = fhir_resource.__class__.__name__
-            ref_manager.add_mapping(res_type, data['id'], fhir_id)
+                ref_manager.add_mapping(res_type, data['id'], mongo_id)
+
+                print(f" [💾] Đã lưu {res_type} vào MongoDB với ID: {mongo_id}")
 
             print(f" [✅] Chuyển đổi thành công {res_type}")
             # In thử JSON chuẩn FHIR để kiểm tra
