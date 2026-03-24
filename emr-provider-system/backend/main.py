@@ -1,11 +1,14 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 import models
 import schemas
 import database
 import publisher
 from faker import Faker
 import random
+import time
+import uuid
 from constants import API_TITLE
 
 app = FastAPI(title=API_TITLE)
@@ -48,35 +51,82 @@ def create_patient(
 @app.post("/test/seed-patient/{count}", tags=["Testing"])
 def seed_patients(count: int, db: Session = Depends(database.get_db)):
     """
-    Tự động tạo ra 'count' bệnh nhân ngẫu nhiên và bắn qua RabbitMQ.
-    Một cú click, cả hệ thống (Adapter, Mongo) đều chạy!
+    Tự động tạo ra 'count' bệnh nhân ngẫu nhiên, không trùng lặp và bắn qua RabbitMQ.
     """
-    created_patients = []
-    for _ in range(count):
-        # 1. Tạo dữ liệu giả cực thực tế
-        gender_vn = random.choice(["Nam", "Nữ", "Khác"])
-        fake_patient = {
-            "patient_external_id": f"AUTO-{fake.random_int(1000, 9999)}",
-            "national_id": fake.ssn(),
-            "full_name": fake.name(),
-            "gender": gender_vn,
-            "birth_date": fake.date_of_birth(minimum_age=0, maximum_age=90).isoformat(),
-            "address": fake.address(),
-            "phone": fake.phone_number(),
-            "insurance_card_no": f"DN{fake.random_int(100, 999)}{fake.random_int(10000, 99999)}"
-        }
+    created_names = []
+    created_count = 0
+    attempts = 0
+    max_attempts = count * 3 # Tăng lên một chút để thoải mái thử lại nếu trùng
 
-        # 2. Lưu SQL
-        db_patient = models.Patient(**fake_patient)
-        db.add(db_patient)
-        db.commit()
-        db.refresh(db_patient)
-
-        # 3. Bắn sang RabbitMQ (dùng code snapshot của em)
-        snapshot = {c.name: getattr(db_patient, c.name) for c in db_patient.__table__.columns}
-        if snapshot.get('birth_date'): snapshot['birth_date'] = snapshot['birth_date'].isoformat()
+    while created_count < count and attempts < max_attempts:
+        attempts += 1
         
-        publisher.publish_event(operation='c', table_name='patients', data_snapshot=snapshot)
-        created_patients.append(db_patient.full_name)
+        # 1. Tạo ID kết hợp Timestamp + UUID để đảm bảo không trùng với quá khứ
+        # Lấy 6 số cuối của timestamp (miliseconds)
+        ts = str(int(time.time() * 1000))[-6:] 
+        suffix = uuid.uuid4().hex[:4].upper()
+        ext_id = f"BN-2026-{ts}-{suffix}"
 
-    return {"status": f"Đã 'gieo mầm' xong {count} bệnh nhân", "names": created_patients}
+        # 2. Tạo CCCD ngẫu nhiên 12 số
+        nat_id = fake.numerify(text='0###########')
+        
+        # Kiểm tra nhanh trong DB để tránh query lỗi Integrity sau này
+        exists = db.query(models.Patient).filter(
+            (models.Patient.patient_external_id == ext_id) | 
+            (models.Patient.national_id == nat_id)
+        ).first()
+
+        if exists:
+            continue # Trùng thì bỏ qua vòng này, tìm bộ mới
+
+        try:
+            # Lưu vào Postgres
+            new_patient = models.Patient(
+                patient_external_id=ext_id,
+                national_id=nat_id,
+                full_name=fake.name(),
+                gender=random.choice(["Nam", "Nữ", "Khác"]),
+                birth_date=fake.date_of_birth(minimum_age=1, maximum_age=90),
+                address=fake.address().replace('\n', ', '),
+                phone=fake.unique.numerify(text='09########'), # Dùng .unique của faker cho phone
+                insurance_card_no=f"GD{fake.numerify(text='#############')}"
+            )
+            
+            db.add(new_patient)
+            db.commit()
+            db.refresh(new_patient) # Để lấy lại ID tự tăng nếu có
+
+            # 3. Bắn sang RabbitMQ
+            # Lấy data_snapshot từ đối tượng vừa lưu (new_patient)
+            snapshot = {c.name: getattr(new_patient, c.name) for c in new_patient.__table__.columns}
+            
+            # Convert date sang string cho JSON chuẩn
+            if snapshot.get('birth_date'):
+                snapshot['birth_date'] = snapshot['birth_date'].isoformat()
+            
+            # Sử dụng publisher để bắn event
+            publisher.publish_event(
+                operation='c', 
+                table_name='patients', 
+                data_snapshot=snapshot
+            )
+            
+            # 4. Ghi nhận thành công
+            created_names.append(new_patient.full_name)
+            created_count += 1
+
+        except IntegrityError:
+            db.rollback() # Trả lại transaction nếu trùng ở mức DB
+            continue
+        except Exception as e:
+            db.rollback()
+            print(f" [❌] Lỗi không xác định: {e}")
+            continue
+
+    return {
+        "status": "success",
+        "requested": count,
+        "created": created_count,
+        "total_attempts": attempts,
+        "names": created_names
+    }
