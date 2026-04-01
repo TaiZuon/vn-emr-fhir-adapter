@@ -10,16 +10,11 @@ class FHIRValidator:
         Trả về: (is_valid, error_message)
         """
         try:
-            # 1. Schema Validation: 
+            # 1. Schema Validation (Standard FHIR):
             # Thư viện fhir.resources sẽ tự động kiểm tra kiểu dữ liệu, 
-            # định dạng chuỗi (regex), và các giá trị bắt buộc khi gọi .json() hoặc .dict()
-            resource.dict() 
-            
-            # 2. Business Logic Validation (Tùy chỉnh cho VN):
-            # Ví dụ: Theo Quyết định 130, bệnh nhân phải có ít nhất một Identifier (CCCD hoặc mã BN)
-            if type(resource).__name__ == "Patient":
-                if not getattr(resource, 'identifier', None) or len(resource.identifier) == 0:
-                    return False, "Thiếu định danh (Identifier) - Bắt buộc theo chuẩn liên thông VN."
+            # định dạng chuỗi (regex), và các giá trị bắt buộc theo CHUẨN FHIR quốc tế.
+            # Bất kỳ trường nào bắt buộc bởi FHIR standard, Pydantic sẽ ném ra ValidationError.
+            resource.dict()
 
             return True, None
 

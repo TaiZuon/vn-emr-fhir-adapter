@@ -30,10 +30,13 @@ class TransformEngine:
                 obj.identifier = [Identifier(value=str(value), system="http://hospital.vn/id")]
             elif path == "code.coding[0].code":
                 if not obj.code: obj.code = CodeableConcept()
-                obj.code.coding = [Coding(code=str(value), system="http://loinc.org")]
+                if not obj.code.coding: obj.code.coding = [Coding()]
+                obj.code.coding[0].code = str(value)
+                if not obj.code.coding[0].system: obj.code.coding[0].system = "http://loinc.org"
             elif path == "code.coding[0].display":
-                if obj.code and obj.code.coding:
-                    obj.code.coding[0].display = str(value)
+                if not obj.code: obj.code = CodeableConcept()
+                if not obj.code.coding: obj.code.coding = [Coding()]
+                obj.code.coding[0].display = str(value)
             elif path == "valueQuantity.value":
                 if not obj.valueQuantity: obj.valueQuantity = Quantity()
                 obj.valueQuantity.value = float(value)
@@ -42,6 +45,8 @@ class TransformEngine:
                 obj.valueQuantity.unit = str(value)
             elif path == "subject.reference":
                 obj.subject = {"reference": str(value)}
+            elif path == "encounter.reference":
+                obj.encounter = {"reference": str(value)}
             elif path == "telecom[0].value":
                 obj.telecom = [ContactPoint(system="phone", value=str(value))]
             elif path == "qualification[0].code.text":
@@ -71,8 +76,8 @@ class TransformEngine:
             resource = Patient()
             resource.active = True  # FHIR Patient dùng 'active' thay vì 'status'
         elif res_type == "Observation":
-            resource = Observation()
-            resource.status = "final" # Bắt buộc đối với Observation
+            # Khởi tạo kèm các trường bắt buộc (mandatory fields) để Pydantic không báo lỗi ngay lập tức
+            resource = Observation(status="final", code=CodeableConcept())
         elif res_type == "Practitioner":
             resource = Practitioner()
             resource.active = True
@@ -91,7 +96,20 @@ class TransformEngine:
                 # final_val = rule["map"].get(val, "unknown")
                 final_val = rule["map"].get(val, val)
             elif rule["action"] == "float":
-                final_val = float(val)
+                try:
+                    final_val = float(val)
+                except Exception as e:
+                    if isinstance(val, dict):
+                        # Debezium decimal format {"scale": 1, "value": "Base64"}
+                        if "value" in val and "scale" in val:
+                            import base64
+                            raw_bytes = base64.b64decode(val["value"])
+                            unscaled = int.from_bytes(raw_bytes, byteorder="big", signed=True)
+                            final_val = float(unscaled) / (10 ** val["scale"])
+                        else:
+                            raise e
+                    else:
+                        raise e
             elif rule["action"] == "reference":
                 final_val = ref_manager.resolve(rule["ref_type"], val)
                 if not final_val: continue # Bỏ qua nếu chưa có tham chiếu

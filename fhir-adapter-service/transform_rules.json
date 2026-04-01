@@ -22,7 +22,7 @@
       { "source": "code_display", "target": "code.coding[0].display", "action": "direct" },
       { "source": "value_number", "target": "valueQuantity.value", "action": "float" },
       { "source": "value_unit", "target": "valueQuantity.unit", "action": "direct" },
-      { "source": "patient_id", "target": "subject.reference", "action": "reference", "ref_type": "Patient" }
+      { "source": "encounter_id", "target": "encounter.reference", "action": "reference", "ref_type": "Encounter" }
     ]
   },
   "practitioners": {

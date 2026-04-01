@@ -325,3 +325,139 @@ def delete_encounter(enc_id: int, db: Session = Depends(database.get_db)):
     db.commit()
     db.refresh(db_enc)
     return db_enc
+
+# --- OBSERVATION CRUD ---
+@app.post("/observations/", response_model=schemas.ObservationResponse)
+def create_observation(observation: schemas.ObservationCreate, db: Session = Depends(database.get_db)):
+    db_obs = models.Observation(**observation.dict())
+    db.add(db_obs)
+    db.commit()
+    db.refresh(db_obs)
+    return db_obs
+
+@app.get("/observations/{obs_id}", response_model=schemas.ObservationResponse)
+def get_observation(obs_id: int, db: Session = Depends(database.get_db)):
+    obs = db.query(models.Observation).filter(models.Observation.id == obs_id, models.Observation.is_deleted == False).first()
+    if not obs: raise HTTPException(status_code=404, detail="Observation not found")
+    return obs
+
+@app.get("/observations/", response_model=List[schemas.ObservationResponse])
+def list_observations(skip: int = 0, limit: int = 100, db: Session = Depends(database.get_db)):
+    return db.query(models.Observation).filter(models.Observation.is_deleted == False).offset(skip).limit(limit).all()
+
+@app.put("/observations/{obs_id}", response_model=schemas.ObservationResponse)
+def update_observation(obs_id: int, obs_update: schemas.ObservationUpdate, db: Session = Depends(database.get_db)):
+    db_obs = db.query(models.Observation).filter(models.Observation.id == obs_id, models.Observation.is_deleted == False).first()
+    if not db_obs: raise HTTPException(status_code=404, detail="Observation not found")
+    
+    for key, value in obs_update.dict(exclude_unset=True).items():
+        setattr(db_obs, key, value)
+    db.commit()
+    db.refresh(db_obs)
+    return db_obs
+
+@app.delete("/observations/{obs_id}", response_model=schemas.ObservationResponse)
+def delete_observation(obs_id: int, db: Session = Depends(database.get_db)):
+    db_obs = db.query(models.Observation).filter(models.Observation.id == obs_id, models.Observation.is_deleted == False).first()
+    if not db_obs: raise HTTPException(status_code=404, detail="Observation not found")
+    db_obs.is_deleted = True
+    db.commit()
+    db.refresh(db_obs)
+    return db_obs
+
+@app.post("/test/seed-complex-workflow/{count}", tags=["Testing"])
+def seed_complex_workflow(count: int, db: Session = Depends(database.get_db)):
+    """
+    Tạo kịch bản khám bệnh thực tế: 
+    1 Bệnh nhân -> 1 Lượt khám (với 1 Bác sĩ) -> Nhiều Chỉ số sinh tồn (Observations)
+    Hành động này sẽ tạo ra một loạt event liên tiếp qua Debezium.
+    """
+    results = []
+    
+    for _ in range(count):
+        try:
+            # 1. Tạo Bệnh nhân mới
+            ts = str(int(time.time() * 1000))[-6:]
+            suffix = uuid.uuid4().hex[:4].upper()
+            patient = models.Patient(
+                patient_external_id=f"BN-WF-{ts}-{suffix}",
+                national_id=fake.unique.numerify(text='0###########'),
+                full_name=fake.name(),
+                gender=random.choice(["Nam", "Nữ", "Khác"]),
+                birth_date=fake.date_of_birth(minimum_age=1, maximum_age=90),
+                address=fake.address().replace('\n', ', '),
+                phone=fake.unique.numerify(text='09########'),
+            )
+            db.add(patient)
+            db.commit()
+            db.refresh(patient)
+            
+            # 2. Lấy 1 Bác sĩ bất kỳ (nếu chưa có thì tạo)
+            prac = db.query(models.Practitioner).first()
+            if not prac:
+                prac = models.Practitioner(
+                    practitioner_code=f"BS-WF-{ts}",
+                    full_name="Bác sĩ Mặc Định",
+                    specialty="Nội tổng hợp"
+                )
+                db.add(prac)
+                db.commit()
+                db.refresh(prac)
+                
+            # 3. Tạo Encounter (Lượt khám)
+            enc = models.Encounter(
+                patient_id=patient.id,
+                practitioner_id=prac.id,
+                status="ARRIVED",
+                reason_code="Khám sức khỏe tổng quát",
+                location="Phòng Khám Nội 1"
+            )
+            db.add(enc)
+            db.commit()
+            db.refresh(enc)
+            
+            # 4. Tạo Observations (Sinh hiệu cơ bản: Nhịp tim, Huyết áp, Nhiệt độ)
+            import decimal
+            obs_list = [
+                models.Observation(
+                    encounter_id=enc.id,
+                    category="vital-signs",
+                    code_display="Nhịp tim",
+                    code_system="8867-4", # LOINC
+                    value_number=decimal.Decimal(random.randint(60, 100)),
+                    value_unit="/min"
+                ),
+                models.Observation(
+                    encounter_id=enc.id,
+                    category="vital-signs",
+                    code_display="Huyết áp tâm thu",
+                    code_system="8480-6", # LOINC
+                    value_number=decimal.Decimal(random.randint(110, 140)),
+                    value_unit="mmHg"
+                ),
+                models.Observation(
+                    encounter_id=enc.id,
+                    category="vital-signs",
+                    code_display="Nhiệt độ cơ thể",
+                    code_system="8310-5", # LOINC
+                    value_number=decimal.Decimal(round(random.uniform(36.5, 37.8), 1)),
+                    value_unit="Cel"
+                )
+            ]
+            db.add_all(obs_list)
+            db.commit()
+            
+            results.append({
+                "patient_id": patient.id,
+                "encounter_id": enc.id,
+                "observations_count": len(obs_list)
+            })
+            
+            # Giả lập thời gian trễ của quy trình thực tế gõ máy tính (0.5s)
+            time.sleep(0.5)
+
+        except Exception as e:
+            db.rollback()
+            print(f"Error in complex seed: {e}")
+            
+    return {"status": "success", "workflows_created": len(results), "details": results}
