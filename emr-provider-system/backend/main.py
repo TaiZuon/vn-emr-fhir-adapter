@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 import models
 import schemas
 import database
-import publisher
+# import publisher
 from faker import Faker
 import random
 import time
@@ -40,11 +40,11 @@ def create_patient(
 
     # Bắn sự kiện sang RabbitMQ theo chuẩn Debezium
     # op='c' nghĩa là Create, table_name='patients' để báo cho Adapter biết dùng Rule nào
-    publisher.publish_event(
-        operation='c', 
-        table_name='patients', 
-        data_snapshot=snapshot
-    )
+    # publisher.publish_event(
+    #     operation='c', 
+    #     table_name='patients', 
+    #     data_snapshot=snapshot
+    # )
 
     return db_patient
 
@@ -104,12 +104,12 @@ def seed_patients(count: int, db: Session = Depends(database.get_db)):
             if snapshot.get('birth_date'):
                 snapshot['birth_date'] = snapshot['birth_date'].isoformat()
             
-            # Sử dụng publisher để bắn event
-            publisher.publish_event(
-                operation='c', 
-                table_name='patients', 
-                data_snapshot=snapshot
-            )
+            # # Sử dụng publisher để bắn event
+            # publisher.publish_event(
+            #     operation='c', 
+            #     table_name='patients', 
+            #     data_snapshot=snapshot
+            # )
             
             # 4. Ghi nhận thành công
             created_names.append(new_patient.full_name)
