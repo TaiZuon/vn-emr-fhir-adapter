@@ -1,5 +1,6 @@
 # fhir-adapter-service/transform_engine.py
 import json
+import datetime
 from fhir.resources.patient import Patient
 from fhir.resources.observation import Observation
 from fhir.resources.humanname import HumanName
@@ -73,8 +74,13 @@ class TransformEngine:
                 final_val = ref_manager.resolve(rule["ref_type"], val)
                 if not final_val: continue # Bỏ qua nếu chưa có tham chiếu
             # Nếu là string định dạng ngày tháng ISO (từ EMR gửi qua), ta gán trực tiếp
-            elif rule["action"] == "date" and hasattr(val, 'isoformat'):
-                final_val = val.isoformat()
+            elif rule["action"] == "date":
+                if hasattr(val, 'isoformat'):
+                    final_val = val.isoformat()
+                elif isinstance(val, int):
+                    final_val = (datetime.date(1970, 1, 1) + datetime.timedelta(days=val)).isoformat()
+                elif isinstance(val, str):
+                    final_val = val
 
             self._set_nested_attr(resource, rule["target"], final_val)
         

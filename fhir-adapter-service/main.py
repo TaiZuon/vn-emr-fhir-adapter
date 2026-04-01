@@ -19,6 +19,7 @@ def process_event(ch, method, properties, body):
     PreHandle -> Transform -> Reference -> [Validation] -> Store
     """
     try:
+        log.info(f"[DEBUG] Received message with routing key: {method.routing_key}")
         # 1. PreHandle: Giải mã tin nhắn chuẩn (op, after, source)
         message = json.loads(body)
         op = message.get("op") # 'c' (create), 'u' (update)
@@ -74,6 +75,7 @@ def start_adapter():
         connection = pika.BlockingConnection(pika.ConnectionParameters(host='localhost'))
         channel = connection.channel()
         channel.queue_declare(queue='emr_events', durable=True)
+        channel.queue_bind(queue='emr_events', exchange='amq.topic', routing_key='emr_events')
         channel.basic_qos(prefetch_count=1)
 
         log.info('FHIR ADAPTER đang chạy. Đợi dữ liệu từ EMR...')

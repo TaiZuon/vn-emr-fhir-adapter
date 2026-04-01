@@ -4,6 +4,7 @@ services:
     image: postgres:15-alpine
     container_name: emr-postgres
     restart: always
+    command: ["postgres", "-c", "wal_level=logical"]
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password123
@@ -35,6 +36,17 @@ services:
       - "27017:27017"
     volumes:
       - ./infrastructure/mongo_data:/data/db
+
+  debezium:
+    image: quay.io/debezium/server:2.4
+    container_name: emr-debezium
+    restart: always
+    depends_on:
+      - emr-db
+      - rabbitmq
+    volumes:
+      - ./infrastructure/debezium_conf:/debezium/conf
+      - ./infrastructure/debezium_data:/debezium/data
 
   # Công cụ xem dữ liệu MongoDB 
   mongo-express:
