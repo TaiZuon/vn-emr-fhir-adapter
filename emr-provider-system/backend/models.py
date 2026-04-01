@@ -7,6 +7,7 @@ from sqlalchemy import (
     ForeignKey,
     Text,
     Numeric,
+    Boolean,
     CheckConstraint,
 )
 from sqlalchemy.orm import relationship
@@ -43,6 +44,7 @@ class Practitioner(Base):
     full_name = Column(String(MAX_LENGTH_FULL_NAME), nullable=False)
     specialty = Column(String(MAX_LENGTH_SPECIALTY))  # Chuyên khoa
     phone = Column(String(MAX_LENGTH_PHONE))
+    is_deleted = Column(Boolean, default=False)
 
     # Relationships
     encounters = relationship("Encounter", back_populates="practitioner")
@@ -65,6 +67,7 @@ class Patient(Base):
     phone = Column(String(MAX_LENGTH_PHONE))
     # Mã số thẻ BHYT
     insurance_card_no = Column(String(MAX_LENGTH_INSURANCE_CARD_NO))
+    is_deleted = Column(Boolean, default=False)
     # Relationships
     encounters = relationship("Encounter", back_populates="patient")
 
@@ -81,6 +84,7 @@ class Encounter(Base):
     start_timestamp = Column(DateTime, default=datetime.datetime.utcnow)
     reason_code = Column(Text)  # Lý do khám/Mã ICD-10 sơ bộ
     location = Column(String(MAX_LENGTH_LOCATION))  # Phòng khám/Khoa
+    is_deleted = Column(Boolean, default=False)
 
     # Relationships
     patient = relationship("Patient", back_populates="encounters")
@@ -102,6 +106,7 @@ class Observation(Base):
     # mmHg, kg, Celsius
     value_unit = Column(String(MAX_LENGTH_VALUE_UNIT))
     issued_at = Column(DateTime, default=datetime.datetime.utcnow)
+    is_deleted = Column(Boolean, default=False)
 
     # Relationships
     encounter = relationship("Encounter", back_populates="observations")
