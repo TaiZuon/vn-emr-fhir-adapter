@@ -2,15 +2,78 @@ import pika
 import json
 import time
 import sys
-from transform_engine import TransformEngine
+from dag_compiler import DAGCompiler
+from fhir.resources import get_fhir_model_class
 from reference_manager import ref_manager
 from validator import FHIRValidator
 from database_mongo import fhir_store
 from utils.metrics import monitor_adapter, start_metrics_server
 from utils.logger import log
+from prehandle_module import DataPreHandler
 
-# Khởi tạo Engine ánh xạ
-engine = TransformEngine("transform_rules.json")
+# Khởi tạo Engine ánh xạ bằng DAG
+compiler = DAGCompiler("transform_rules.json")
+dag = compiler.compile()
+
+# Khởi tạo PreHandler để micro-batching
+prehandler = DataPreHandler(batch_size=50, timeout_seconds=5.0)
+
+def process_batch(channel, batch, delivery_tags):
+    """
+    Xử lý một lô dữ liệu đã được PreHandle: Transform -> Validate -> Store
+    """
+    if not batch:
+        return
+    
+    try:
+        for item in batch:
+            table = item.get("source", {}).get("table")
+            data = item.get("after")
+            
+            # FIX: Gắn routing key (table) vào payload để kích hoạt DAG Condition
+            data['_table'] = table
+            
+            # 2. Transform Module: Sử dụng DAG Engine
+            fhir_dict = dag.execute(data)
+            if not fhir_dict or "resourceType" not in fhir_dict:
+                continue
+
+            res_type = fhir_dict["resourceType"]
+            try:
+                # FIX: Chuyển đổi Dictionary sang Pydantic Model của FHIR
+                ModelClass = get_fhir_model_class(res_type)
+                fhir_resource = ModelClass(**fhir_dict)
+            except Exception as e:
+                log.error(f"Khởi tạo model Pydantic thất bại cho {res_type}: {e}")
+                continue
+
+            # 3. & 5. Validation Module
+            is_valid, error_msg = FHIRValidator.validate(fhir_resource)
+            if not is_valid:
+                log.error(f"Validation failed for {res_type}: {error_msg}")
+                continue
+                
+            log.debug(f"Validation thành công cho {res_type}")
+
+            # 4. Store Module
+            mongo_id = fhir_store.save_resource(fhir_resource)
+
+            if mongo_id:
+                ref_manager.add_mapping(res_type, data['id'], mongo_id)
+                log.info(f"Đã lưu {res_type} vào MongoDB với ID: {mongo_id}")
+                
+        # Tất cả resource trong batch đã được process thành công, ta tiến hành ACK
+        for tag in delivery_tags:
+            channel.basic_ack(delivery_tag=tag)
+            
+        log.info(f" Đã xử lý và ACK thành công {len(delivery_tags)} sự kiện.")
+        
+    except Exception as e:
+        log.error(f"Lỗi hệ thống khi xử lý batch: {e}")
+        # Không Ack để tin nhắn chờ xử lý lại nếu lỗi hạ tầng
+        for tag in delivery_tags:
+            channel.basic_nack(delivery_tag=tag, requeue=True)
+        time.sleep(2)
 
 @monitor_adapter
 def process_event(ch, method, properties, body):
@@ -19,7 +82,6 @@ def process_event(ch, method, properties, body):
     PreHandle -> Transform -> Reference -> [Validation] -> Store
     """
     try:
-        log.info(f"[DEBUG] Received message with routing key: {method.routing_key}")
         # 1. PreHandle: Giải mã tin nhắn chuẩn (op, after, source)
         message = json.loads(body)
         op = message.get("op") # 'c' (create), 'u' (update)
@@ -27,48 +89,18 @@ def process_event(ch, method, properties, body):
         table = message.get("source", {}).get("table")
 
         if not data or not table:
+            # Dữ liệu hỏng hoặc không có bảng -> ACK để drop
             ch.basic_ack(delivery_tag=method.delivery_tag)
             return
 
-        log.debug(f"Bắt sự kiện: {op.upper()} trên bảng '{table}'")
-
-        # 2. Transform Module: Sử dụng Rule Engine
-        fhir_resource = engine.convert(table, data)
-
-        # print(f"[DEBUG] {fhir_resource}")
-
-        if fhir_resource:
-            # 3. Reference & Store Module (Task 3.4 sẽ kết nối MongoDB thật)
-            is_valid, error_msg = FHIRValidator.validate(fhir_resource)
-            res_type = fhir_resource.__class__.__name__
-            if not is_valid:
-                log.error(f"Validation failed: {error_msg}")
-                ch.basic_ack(delivery_tag=method.delivery_tag)
-                return
-            
-            log.debug(f"Validation thành công cho {res_type}")
-
-            # fhir_id = f"fhir_id_mock_{data['id']}" 
-            mongo_id = fhir_store.save_resource(fhir_resource)
-
-            if mongo_id:
-            # Lưu vào cache tham chiếu để dùng cho các bản ghi liên quan sau này
-                ref_manager.add_mapping(res_type, data['id'], mongo_id)
-
-                log.info(f"Đã lưu {res_type} vào MongoDB với ID: {mongo_id}")
-
-            # In thử JSON chuẩn FHIR để kiểm tra
-            log.debug(f"FHIR Resource JSON:\n{fhir_resource.json(indent=2)}")
-
-        # Xác nhận xử lý xong
-        ch.basic_ack(delivery_tag=method.delivery_tag)
+        # Nạp event vào buffer, nếu trả về batch thì đem xử lý
+        batch, tags = prehandler.add_event(message, method.delivery_tag)
+        if batch:
+            process_batch(ch, batch, tags)
 
     except Exception as e:
-        log.error(f"Lỗi hệ thống: {e}")
-        # Không Ack để tin nhắn chờ xử lý lại nếu lỗi hạ tầng
+        log.error(f"Lỗi khi tiếp nhận tin nhắn: {e}")
         ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
-
-        time.sleep(2)
 
 def start_adapter():
     try:
@@ -76,9 +108,30 @@ def start_adapter():
         channel = connection.channel()
         channel.queue_declare(queue='emr_events', durable=True)
         channel.queue_bind(queue='emr_events', exchange='amq.topic', routing_key='emr_events')
-        channel.basic_qos(prefetch_count=1)
+        
+        # Prefetch larger than 1 to allow accumulation
+        channel.basic_qos(prefetch_count=prehandler.batch_size)
+    
+        def heartbeat_flush():
+            """
+            Background async heartbeat check. Forcibly flushes trailing messages
+            in the buffer if they've sat longer than timeout_seconds.
+            """
+            current_time = time.time()
+            if prehandler.buffer and (current_time - prehandler.last_flush_time) >= prehandler.timeout_seconds:
+                log.info(f" Heartbeat timeout reached. Bắt đầu flush thủ công {len(prehandler.buffer)} messages.")
+                batch, tags = prehandler.flush()
+                # We are safely on the main Pika loop thread here, so we can process and ACK
+                process_batch(channel, batch, tags)
+                
+            # Schedule self again
+            connection.call_later(1.0, heartbeat_flush)
 
         log.info('FHIR ADAPTER đang chạy. Đợi dữ liệu từ EMR...')
+        
+        # Bắt đầu vòng lặp Heartbeat không đồng bộ (1s/lần)
+        connection.call_later(1.0, heartbeat_flush)
+        
         channel.basic_consume(queue='emr_events', on_message_callback=process_event)
         channel.start_consuming()
 
