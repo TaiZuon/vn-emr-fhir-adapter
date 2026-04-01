@@ -24,5 +24,32 @@
       { "source": "value_unit", "target": "valueQuantity.unit", "action": "direct" },
       { "source": "patient_id", "target": "subject.reference", "action": "reference", "ref_type": "Patient" }
     ]
+  },
+  "practitioners": {
+    "resource_type": "Practitioner",
+    "rules": [
+      { "source": "id", "target": "id", "action": "direct" },
+      { "source": "practitioner_code", "target": "identifier[0].value", "action": "direct" },
+      { "source": "full_name", "target": "name[0].text", "action": "direct" },
+      { "source": "specialty", "target": "qualification[0].code.text", "action": "direct" },
+      { "source": "phone", "target": "telecom[0].value", "action": "direct" }
+    ]
+  },
+  "encounters": {
+    "resource_type": "Encounter",
+    "rules": [
+      { "source": "id", "target": "id", "action": "direct" },
+      { 
+        "source": "status", 
+        "target": "status", 
+        "action": "lookup", 
+        "map": { "COMPLETED": "completed", "IN_PROGRESS": "in-progress", "PLANNED": "planned", "ARRIVED": "arrived", "CANCELLED": "cancelled" } 
+      },
+      { "source": "start_timestamp", "target": "actualPeriod.start", "action": "date" },
+      { "source": "reason_code", "target": "type[0].text", "action": "direct" },
+      { "source": "location", "target": "location[0].location.display", "action": "direct" },
+      { "source": "patient_id", "target": "subject.reference", "action": "reference", "ref_type": "Patient" },
+      { "source": "practitioner_id", "target": "participant[0].actor.reference", "action": "reference", "ref_type": "Practitioner" }
+    ]
   }
 }

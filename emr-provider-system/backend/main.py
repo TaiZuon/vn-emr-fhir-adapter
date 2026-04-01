@@ -130,3 +130,198 @@ def seed_patients(count: int, db: Session = Depends(database.get_db)):
         "total_attempts": attempts,
         "names": created_names
     }
+
+@app.post("/test/seed-practitioner/{count}", tags=["Testing"])
+def seed_practitioners(count: int, db: Session = Depends(database.get_db)):
+    """
+    Tự động tạo ra 'count' nhân viên y tế ngẫu nhiên
+    """
+    created_names = []
+    created_count = 0
+    attempts = 0
+
+    while created_count < count and attempts < count * 3:
+        attempts += 1
+        ts = str(int(time.time() * 1000))[-6:]
+        suffix = uuid.uuid4().hex[:4].upper()
+        prac_code = f"BS-2026-{ts}-{suffix}"
+        
+        exists = db.query(models.Practitioner).filter(models.Practitioner.practitioner_code == prac_code).first()
+        if exists: continue
+
+        try:
+            new_prac = models.Practitioner(
+                practitioner_code=prac_code,
+                full_name=fake.name(),
+                specialty=random.choice(["Nội khoa", "Ngoại khoa", "Nhi khoa", "Sản phụ khoa", "Mắt", "Tai Mũi Họng", "Răng Hàm Mặt"]),
+                phone=fake.unique.numerify(text='09########')
+            )
+            db.add(new_prac)
+            db.commit()
+            db.refresh(new_prac)
+            created_names.append(new_prac.full_name)
+            created_count += 1
+        except IntegrityError:
+            db.rollback()
+            continue
+        except Exception as e:
+            db.rollback()
+            print(f" [❌] Lỗi: {e}")
+            continue
+
+    return {
+        "status": "success",
+        "requested": count,
+        "created": created_count,
+        "names": created_names
+    }
+
+@app.post("/test/seed-encounter/{count}", tags=["Testing"])
+def seed_encounters(count: int, db: Session = Depends(database.get_db)):
+    """
+    Tự động tạo ra 'count' lượt khám (Encounter) ngẫu nhiên map giữa Patient và Practitioner có sẵn trong DB
+    """
+    patient_ids = [p.id for p in db.query(models.Patient.id).all()]
+    practitioner_ids = [p.id for p in db.query(models.Practitioner.id).all()]
+    
+    if not patient_ids or not practitioner_ids:
+        raise HTTPException(status_code=400, detail="Không có đủ dữ liệu Patient và Practitioner để tạo Encounter")
+
+    created_ids = []
+    created_count = 0
+
+    for _ in range(count):
+        try:
+            new_enc = models.Encounter(
+                patient_id=random.choice(patient_ids),
+                practitioner_id=random.choice(practitioner_ids),
+                status=random.choice(["COMPLETED", "IN_PROGRESS", "PLANNED", "ARRIVED", "CANCELLED"]),
+                reason_code=random.choice(["J00", "I10", "E11", "K21"]),
+                location=random.choice(["Phòng khám nội 1", "Phòng khám ngoại 2", "Khoa cấp cứu", "Phòng tiểu phẫu"])
+            )
+            db.add(new_enc)
+            db.commit()
+            db.refresh(new_enc)
+            created_ids.append(new_enc.id)
+            created_count += 1
+        except Exception as e:
+            db.rollback()
+            print(f" [❌] Lỗi Encounter: {e}")
+            continue
+
+    return {
+        "status": "success",
+        "requested": count,
+        "created": created_count,
+        "encounter_ids": created_ids
+    }
+from typing import List
+
+# --- PATIENT CRUD ---
+@app.get("/patients/{patient_id}", response_model=schemas.PatientResponse)
+def get_patient(patient_id: int, db: Session = Depends(database.get_db)):
+    patient = db.query(models.Patient).filter(models.Patient.id == patient_id, models.Patient.is_deleted == False).first()
+    if not patient: raise HTTPException(status_code=404, detail="Patient not found")
+    return patient
+
+@app.get("/patients/", response_model=List[schemas.PatientResponse])
+def list_patients(skip: int = 0, limit: int = 100, db: Session = Depends(database.get_db)):
+    return db.query(models.Patient).filter(models.Patient.is_deleted == False).offset(skip).limit(limit).all()
+
+@app.put("/patients/{patient_id}", response_model=schemas.PatientResponse)
+def update_patient(patient_id: int, patient_update: schemas.PatientUpdate, db: Session = Depends(database.get_db)):
+    db_patient = db.query(models.Patient).filter(models.Patient.id == patient_id, models.Patient.is_deleted == False).first()
+    if not db_patient: raise HTTPException(status_code=404, detail="Patient not found")
+    
+    for key, value in patient_update.dict(exclude_unset=True).items():
+        setattr(db_patient, key, value)
+    db.commit()
+    db.refresh(db_patient)
+    return db_patient
+
+@app.delete("/patients/{patient_id}", response_model=schemas.PatientResponse)
+def delete_patient(patient_id: int, db: Session = Depends(database.get_db)):
+    db_patient = db.query(models.Patient).filter(models.Patient.id == patient_id, models.Patient.is_deleted == False).first()
+    if not db_patient: raise HTTPException(status_code=404, detail="Patient not found")
+    db_patient.is_deleted = True
+    db.commit()
+    db.refresh(db_patient)
+    return db_patient
+
+# --- PRACTITIONER CRUD ---
+@app.post("/practitioners/", response_model=schemas.PractitionerResponse)
+def create_practitioner(practitioner: schemas.PractitionerCreate, db: Session = Depends(database.get_db)):
+    db_prac = models.Practitioner(**practitioner.dict())
+    db.add(db_prac)
+    db.commit()
+    db.refresh(db_prac)
+    return db_prac
+
+@app.get("/practitioners/{prac_id}", response_model=schemas.PractitionerResponse)
+def get_practitioner(prac_id: int, db: Session = Depends(database.get_db)):
+    prac = db.query(models.Practitioner).filter(models.Practitioner.id == prac_id, models.Practitioner.is_deleted == False).first()
+    if not prac: raise HTTPException(status_code=404, detail="Practitioner not found")
+    return prac
+
+@app.get("/practitioners/", response_model=List[schemas.PractitionerResponse])
+def list_practitioners(skip: int = 0, limit: int = 100, db: Session = Depends(database.get_db)):
+    return db.query(models.Practitioner).filter(models.Practitioner.is_deleted == False).offset(skip).limit(limit).all()
+
+@app.put("/practitioners/{prac_id}", response_model=schemas.PractitionerResponse)
+def update_practitioner(prac_id: int, prac_update: schemas.PractitionerUpdate, db: Session = Depends(database.get_db)):
+    db_prac = db.query(models.Practitioner).filter(models.Practitioner.id == prac_id, models.Practitioner.is_deleted == False).first()
+    if not db_prac: raise HTTPException(status_code=404, detail="Practitioner not found")
+    
+    for key, value in prac_update.dict(exclude_unset=True).items():
+        setattr(db_prac, key, value)
+    db.commit()
+    db.refresh(db_prac)
+    return db_prac
+
+@app.delete("/practitioners/{prac_id}", response_model=schemas.PractitionerResponse)
+def delete_practitioner(prac_id: int, db: Session = Depends(database.get_db)):
+    db_prac = db.query(models.Practitioner).filter(models.Practitioner.id == prac_id, models.Practitioner.is_deleted == False).first()
+    if not db_prac: raise HTTPException(status_code=404, detail="Practitioner not found")
+    db_prac.is_deleted = True
+    db.commit()
+    db.refresh(db_prac)
+    return db_prac
+
+# --- ENCOUNTER CRUD ---
+@app.post("/encounters/", response_model=schemas.EncounterResponse)
+def create_encounter(encounter: schemas.EncounterCreate, db: Session = Depends(database.get_db)):
+    db_enc = models.Encounter(**encounter.dict())
+    db.add(db_enc)
+    db.commit()
+    db.refresh(db_enc)
+    return db_enc
+
+@app.get("/encounters/{enc_id}", response_model=schemas.EncounterResponse)
+def get_encounter(enc_id: int, db: Session = Depends(database.get_db)):
+    enc = db.query(models.Encounter).filter(models.Encounter.id == enc_id, models.Encounter.is_deleted == False).first()
+    if not enc: raise HTTPException(status_code=404, detail="Encounter not found")
+    return enc
+
+@app.get("/encounters/", response_model=List[schemas.EncounterResponse])
+def list_encounters(skip: int = 0, limit: int = 100, db: Session = Depends(database.get_db)):
+    return db.query(models.Encounter).filter(models.Encounter.is_deleted == False).offset(skip).limit(limit).all()
+
+@app.put("/encounters/{enc_id}", response_model=schemas.EncounterResponse)
+def update_encounter(enc_id: int, enc_update: schemas.EncounterUpdate, db: Session = Depends(database.get_db)):
+    db_enc = db.query(models.Encounter).filter(models.Encounter.id == enc_id, models.Encounter.is_deleted == False).first()
+    if not db_enc: raise HTTPException(status_code=404, detail="Encounter not found")
+    
+    for key, value in enc_update.dict(exclude_unset=True).items():
+        setattr(db_enc, key, value)
+    db.commit()
+    db.refresh(db_enc)
+    return db_enc
+
+@app.delete("/encounters/{enc_id}", response_model=schemas.EncounterResponse)
+def delete_encounter(enc_id: int, db: Session = Depends(database.get_db)):
+    db_enc = db.query(models.Encounter).filter(models.Encounter.id == enc_id, models.Encounter.is_deleted == False).first()
+    if not db_enc: raise HTTPException(status_code=404, detail="Encounter not found")
+    db_enc.is_deleted = True
+    db.commit()
+    db.refresh(db_enc)
+    return db_enc

@@ -3,6 +3,10 @@ import json
 import datetime
 from fhir.resources.patient import Patient
 from fhir.resources.observation import Observation
+from fhir.resources.practitioner import Practitioner, PractitionerQualification
+from fhir.resources.encounter import Encounter, EncounterParticipant, EncounterLocation
+from fhir.resources.contactpoint import ContactPoint
+from fhir.resources.period import Period
 from fhir.resources.humanname import HumanName
 from fhir.resources.identifier import Identifier
 from fhir.resources.codeableconcept import CodeableConcept
@@ -38,6 +42,19 @@ class TransformEngine:
                 obj.valueQuantity.unit = str(value)
             elif path == "subject.reference":
                 obj.subject = {"reference": str(value)}
+            elif path == "telecom[0].value":
+                obj.telecom = [ContactPoint(system="phone", value=str(value))]
+            elif path == "qualification[0].code.text":
+                obj.qualification = [PractitionerQualification(code=CodeableConcept(text=str(value)))]
+            elif path == "actualPeriod.start":
+                if not obj.actualPeriod: obj.actualPeriod = Period()
+                obj.actualPeriod.start = value
+            elif path == "type[0].text":
+                obj.type = [CodeableConcept(text=str(value))]
+            elif path == "location[0].location.display":
+                obj.location = [EncounterLocation(location={"display": str(value)})]
+            elif path == "participant[0].actor.reference":
+                obj.participant = [EncounterParticipant(actor={"reference": str(value)})]
             else:
                 setattr(obj, path, value)
         except Exception as e:
@@ -56,6 +73,11 @@ class TransformEngine:
         elif res_type == "Observation":
             resource = Observation()
             resource.status = "final" # Bắt buộc đối với Observation
+        elif res_type == "Practitioner":
+            resource = Practitioner()
+            resource.active = True
+        elif res_type == "Encounter":
+            resource = Encounter(status="unknown", class_fhir=[CodeableConcept(coding=[Coding(system="http://terminology.hl7.org/CodeSystem/v3-ActCode", code="AMB", display="ambulatory")])])
         else:
             return None
 
@@ -78,7 +100,12 @@ class TransformEngine:
                 if hasattr(val, 'isoformat'):
                     final_val = val.isoformat()
                 elif isinstance(val, int):
-                    final_val = (datetime.date(1970, 1, 1) + datetime.timedelta(days=val)).isoformat()
+                    if val > 1000000000:
+                        # Debezium timestamp in microseconds
+                        final_val = datetime.datetime.fromtimestamp(val / 1000000.0).isoformat() + "Z"
+                    else:
+                        # Debezium date in epoch days
+                        final_val = (datetime.date(1970, 1, 1) + datetime.timedelta(days=val)).isoformat()
                 elif isinstance(val, str):
                     final_val = val
 

@@ -17,8 +17,9 @@ class FHIRValidator:
             
             # 2. Business Logic Validation (Tùy chỉnh cho VN):
             # Ví dụ: Theo Quyết định 130, bệnh nhân phải có ít nhất một Identifier (CCCD hoặc mã BN)
-            if not resource.identifier or len(resource.identifier) == 0:
-                return False, "Thiếu định danh (Identifier) - Bắt buộc theo chuẩn liên thông VN."
+            if type(resource).__name__ == "Patient":
+                if not getattr(resource, 'identifier', None) or len(resource.identifier) == 0:
+                    return False, "Thiếu định danh (Identifier) - Bắt buộc theo chuẩn liên thông VN."
 
             return True, None
 

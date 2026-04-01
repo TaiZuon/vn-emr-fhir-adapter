@@ -4,7 +4,8 @@ CREATE TABLE practitioners (
     practitioner_code VARCHAR(20) UNIQUE NOT NULL, -- Mã nhân viên y tế
     full_name VARCHAR(100) NOT NULL,
     specialty VARCHAR(100),                        -- Chuyên khoa
-    phone VARCHAR(20)
+    phone VARCHAR(20),
+    is_deleted BOOLEAN DEFAULT FALSE
 );
 
 -- Bảng bệnh nhân (Patient)
@@ -17,7 +18,8 @@ CREATE TABLE patients (
     birth_date DATE NOT NULL,
     address TEXT,
     phone VARCHAR(20),
-    insurance_card_no VARCHAR(15)                   -- Mã số thẻ BHYT
+    insurance_card_no VARCHAR(15),                  -- Mã số thẻ BHYT
+    is_deleted BOOLEAN DEFAULT FALSE
 );
 
 -- Bảng lượt khám (Encounter)
@@ -28,7 +30,8 @@ CREATE TABLE encounters (
     status VARCHAR(20) DEFAULT 'finished',           -- planned, arrived, finished
     start_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     reason_code TEXT,                                -- Lý do khám/Mã ICD-10 sơ bộ
-    location VARCHAR(100)                            -- Phòng khám/Khoa
+    location VARCHAR(100),                            -- Phòng khám/Khoa
+    is_deleted BOOLEAN DEFAULT FALSE
 );
 
 -- Bảng chỉ số sinh tồn/Xét nghiệm (Observation)
@@ -40,5 +43,6 @@ CREATE TABLE observations (
     code_system VARCHAR(100),  -- Mã chuẩn (LOINC) nếu có
     value_number DECIMAL,
     value_unit VARCHAR(20),    -- mmHg, kg, Celsius
-    issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_deleted BOOLEAN DEFAULT FALSE
 );
