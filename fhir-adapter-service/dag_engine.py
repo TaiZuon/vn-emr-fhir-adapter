@@ -117,7 +117,7 @@ class TransformMap:
 # MOCK DAG TESTING
 # ==========================================
 def mock_action_patient_name(data: dict, child_results: dict):
-    return {"name": [{"text": data.get("full_name")}]}
+    return {"name": [{"text": data.get("ho_ten")}]}
 
 def mock_action_patient_id(data: dict, child_results: dict):
     return {"id": str(data.get("id"))}
@@ -154,8 +154,8 @@ def run_mock_test():
     
     mock_data = {
         "id": 12345,
-        "full_name": "Nguyen Van A",
-        "gender": "Nam"
+        "ho_ten": "Nguyen Van A",
+        "gioi_tinh": 1
     }
     
     print("Executing Mock DAG...")

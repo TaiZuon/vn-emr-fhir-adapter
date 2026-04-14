@@ -112,10 +112,10 @@ class DAGCompiler:
             elif action_type == "lookup":
                 # Inject TerminologyService as requested
                 if target == "gender":
-                    translated = terminology_service.translate_code("local-gender", val)
+                    translated = terminology_service.translate_code("local-gender", str(val))
                     final_val = translated.get("code", val)
                 elif target == "status":
-                    translated = terminology_service.translate_code("local-encounter-status", val)
+                    translated = terminology_service.translate_code("local-encounter-status", str(val))
                     final_val = translated.get("code", val)
                 else:
                     # Fallback to local map if available
@@ -134,10 +134,9 @@ class DAGCompiler:
         for table_name, table_config in self.config.items():
             resource_type = table_config["resource_type"]
             
-            # Root action merges all child mappings and ensures ResourceType is applied
+            # Root action adds ResourceType and FHIR defaults (child results are merged by the engine)
             def make_root_action(res_type):
                 def root_action_func(data: dict, child_results: dict) -> dict:
-                    # deeply merge all child results since they might overlap (e.g. identifier[0].value and identifier[0].system)
                     merged = {"resourceType": res_type}
                     
                     # FHIR R4 constraint defaults
@@ -145,10 +144,23 @@ class DAGCompiler:
                         merged["status"] = "final"
                     elif res_type in ["Patient", "Practitioner"]:
                         merged["active"] = True
+                    elif res_type == "MedicationRequest":
+                        merged["status"] = "active"
+                        merged["intent"] = "order"
+                        if "subject" not in child_results:
+                            merged["subject"] = {"display": "Unknown"}
+                    elif res_type == "Procedure":
+                        merged["status"] = "completed"
+                        if "subject" not in child_results:
+                            merged["subject"] = {"display": "Unknown"}
+                    elif res_type == "ClinicalImpression":
+                        merged["status"] = "completed"
+                        # subject is required - fallback if no reference resolved
+                        if "subject" not in child_results:
+                            merged["subject"] = {"display": "Unknown"}
                         
-                    recursive_merge(merged, child_results)
                     # For Encounter, 'status' comes from child_results if mapped, else 'unknown'
-                    if res_type == "Encounter" and "status" not in merged:
+                    if res_type == "Encounter" and "status" not in child_results:
                         merged["status"] = "unknown"
                         
                     return merged
@@ -184,12 +196,12 @@ if __name__ == "__main__":
     dag = compiler.compile()
     
     mock_patient_data = {
-        "_table": "patients",
+        "_table": "benh_nhan",
         "id": 12345,
-        "patient_external_id": "EXT-999",
-        "full_name": "Nguyen Van A",
-        "gender": "Nam",
-        "birth_date": "1990-01-01"
+        "ma_bn": "BN-2026-001",
+        "ho_ten": "Nguyen Van A",
+        "gioi_tinh": 1,
+        "ngay_sinh": "1990-01-01"
     }
     
     print("Executing Compiled DAG for a Patient record...")

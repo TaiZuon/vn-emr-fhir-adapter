@@ -5,6 +5,9 @@ from fhir.resources.patient import Patient
 from fhir.resources.observation import Observation
 from fhir.resources.practitioner import Practitioner, PractitionerQualification
 from fhir.resources.encounter import Encounter, EncounterParticipant, EncounterLocation
+from fhir.resources.medicationrequest import MedicationRequest
+from fhir.resources.procedure import Procedure
+from fhir.resources.clinicalimpression import ClinicalImpression
 from fhir.resources.contactpoint import ContactPoint
 from fhir.resources.period import Period
 from fhir.resources.humanname import HumanName
@@ -83,6 +86,12 @@ class TransformEngine:
             resource.active = True
         elif res_type == "Encounter":
             resource = Encounter(status="unknown", class_fhir=[CodeableConcept(coding=[Coding(system="http://terminology.hl7.org/CodeSystem/v3-ActCode", code="AMB", display="ambulatory")])])
+        elif res_type == "MedicationRequest":
+            resource = MedicationRequest(status="active", intent="order")
+        elif res_type == "Procedure":
+            resource = Procedure(status="completed")
+        elif res_type == "ClinicalImpression":
+            resource = ClinicalImpression(status="completed")
         else:
             return None
 

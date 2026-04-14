@@ -68,5 +68,22 @@ def seed_patients(n=SEED_DEFAULT_PATIENT_COUNT):
     print("👉 Hãy kiểm tra RabbitMQ Dashboard để thấy các sự kiện đang chờ xử lý.")
 
 
+
+def seed_complex_workflow(count=10):
+    print(f"Bắt đầu seed sinh lực dữ liệu (encounters, conditions, medication requests...)")
+    try:
+        # Seeding encounters
+        res_enc = requests.post(f"{API_BASE_URL}/test/seed-encounter/{count}")
+        
+        # Seeding conditions
+        res_cond = requests.post(f"{API_BASE_URL}/test/seed-condition/{count}")
+
+        # Seeding medications
+        res_med = requests.post(f"{API_BASE_URL}/test/seed-medication/{count}")
+        print(f"Hoàn thành seed các thực thể y tế.")
+    except Exception as e:
+        print(f"Lỗi khi seed complex workflow: {e}")
+
 if __name__ == "__main__":
     seed_patients(100)  # Thử nghiệm với 100 bệnh nhân
+    seed_complex_workflow(50)

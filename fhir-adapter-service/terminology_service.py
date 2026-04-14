@@ -19,14 +19,14 @@ class TerminologyService:
                 "WBC01": {"code": "6690-2", "display": "Leukocytes [#/volume] in Blood by Automated count", "system": "http://loinc.org"}
             },
             "local-gender": {
-                 "Nam": {"code": "male", "display": "Male", "system": "http://hl7.org/fhir/administrative-gender"},
-                 "Nữ": {"code": "female", "display": "Female", "system": "http://hl7.org/fhir/administrative-gender"},
-                 "Khác": {"code": "other", "display": "Other", "system": "http://hl7.org/fhir/administrative-gender"}
+                 "1": {"code": "male", "display": "Male", "system": "http://hl7.org/fhir/administrative-gender"},
+                 "2": {"code": "female", "display": "Female", "system": "http://hl7.org/fhir/administrative-gender"},
+                 "3": {"code": "other", "display": "Other", "system": "http://hl7.org/fhir/administrative-gender"}
             },
             "local-encounter-status": {
-                "COMPLETED": {"code": "finished", "display": "Finished", "system": "http://hl7.org/fhir/encounter-status"},
-                "IN_PROGRESS": {"code": "in-progress", "display": "In Progress", "system": "http://hl7.org/fhir/encounter-status"},
-                "PLANNED": {"code": "planned", "display": "Planned", "system": "http://hl7.org/fhir/encounter-status"}
+                "1": {"code": "finished", "display": "Finished", "system": "http://hl7.org/fhir/encounter-status"},
+                "2": {"code": "in-progress", "display": "In Progress", "system": "http://hl7.org/fhir/encounter-status"},
+                "3": {"code": "cancelled", "display": "Cancelled", "system": "http://hl7.org/fhir/encounter-status"}
             }
         }
         
@@ -74,8 +74,8 @@ terminology_service = TerminologyService()
 if __name__ == "__main__":
     service = TerminologyService()
     
-    print("1. Translating internal gender code 'Nam':")
-    print(json.dumps(service.translate_code("local-gender", "Nam"), indent=2))
+    print("1. Translating internal gender code '1' (Nam):")
+    print(json.dumps(service.translate_code("local-gender", "1"), indent=2))
     
     print("\n2. Translating internal diagnosis code 'D01':")
     print(json.dumps(service.translate_code("local-diagnosis", "D01"), indent=2))
