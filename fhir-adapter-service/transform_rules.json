@@ -10,7 +10,7 @@
         "source": "gioi_tinh", 
         "target": "gender", 
         "action": "lookup", 
-        "map": { "1": "male", "2": "female", "3": "other" } 
+        "system": "vn-emr-gender-map"
       },
       { "source": "ngay_sinh", "target": "birthDate", "action": "date" },
       { "source": "dia_chi", "target": "address[0].text", "action": "direct" },
@@ -35,14 +35,14 @@
       { "source": "ma_the", "target": "extension[0].valueString", "action": "direct" },
       { "source": "ngay_vao", "target": "actualPeriod.start", "action": "date" },
       { "source": "ngay_ra", "target": "actualPeriod.end", "action": "date" },
-      { "source": "ma_benh", "target": "diagnosis[0].condition[0].concept.coding[0].code", "action": "direct" },
-      { "source": "ten_benh", "target": "diagnosis[0].condition[0].concept.coding[0].display", "action": "direct" },
+      { "source": "ma_benh", "target": "diagnosis[0].condition[0].concept.coding[0]", "action": "terminology_lookup", "system": "vn-emr-icd10-map" },
+      { "source": "ten_benh", "target": "diagnosis[0].condition[0].concept.text", "action": "direct" },
       { "source": "ma_benh_khac", "target": "diagnosis[1].condition[0].concept.text", "action": "direct" },
       { 
         "source": "ket_qua_dtri", 
         "target": "status", 
         "action": "lookup", 
-        "map": { "1": "completed", "2": "in-progress", "3": "cancelled" } 
+        "system": "vn-emr-encounter-status-map"
       },
       { "source": "benh_nhan_id", "target": "subject.reference", "action": "reference", "ref_type": "Patient" },
       { "source": "ma_bac_si", "target": "participant[0].actor.reference", "action": "reference", "ref_type": "Practitioner" }
@@ -53,8 +53,8 @@
     "rules": [
       { "source": "id", "target": "id", "action": "direct" },
       { "source": "ma_don_thuoc", "target": "identifier[0].value", "action": "direct" },
-      { "source": "ma_thuoc", "target": "medication.concept.coding[0].code", "action": "direct" },
-      { "source": "ten_thuoc", "target": "medication.concept.coding[0].display", "action": "direct" },
+      { "source": "ma_thuoc", "target": "medication.concept.coding[0]", "action": "terminology_lookup", "system": "vn-emr-medication-map" },
+      { "source": "ten_thuoc", "target": "medication.concept.text", "action": "direct" },
       { "source": "don_vi_tinh", "target": "dispenseRequest.quantity.unit", "action": "direct" },
       { "source": "ham_luong", "target": "medication.concept.text", "action": "direct" },
       { "source": "duong_dung", "target": "dosageInstruction[0].route.text", "action": "direct" },
@@ -72,8 +72,8 @@
     "resource_type": "Procedure",
     "rules": [
       { "source": "id", "target": "id", "action": "direct" },
-      { "source": "ma_dich_vu", "target": "code.coding[0].code", "action": "direct" },
-      { "source": "ten_dich_vu", "target": "code.coding[0].display", "action": "direct" },
+      { "source": "ma_dich_vu", "target": "code.coding[0]", "action": "terminology_lookup", "system": "vn-emr-procedure-map" },
+      { "source": "ten_dich_vu", "target": "code.text", "action": "direct" },
       { "source": "ma_vat_tu", "target": "usedCode[0].coding[0].code", "action": "direct" },
       { "source": "ten_vat_tu", "target": "usedCode[0].coding[0].display", "action": "direct" },
       { "source": "so_luong", "target": "extension[0].valueDecimal", "action": "float" },
@@ -92,8 +92,8 @@
     "rules": [
       { "source": "id", "target": "id", "action": "direct" },
       { "source": "ma_dich_vu", "target": "category[0].coding[0].code", "action": "direct" },
-      { "source": "ma_chi_so", "target": "code.coding[0].code", "action": "direct" },
-      { "source": "ten_chi_so", "target": "code.coding[0].display", "action": "direct" },
+      { "source": "ma_chi_so", "target": "code.coding[0]", "action": "terminology_lookup", "system": "vn-emr-loinc-lab-map" },
+      { "source": "ten_chi_so", "target": "code.text", "action": "direct" },
       { "source": "gia_tri", "target": "valueString", "action": "direct" },
       { "source": "ma_may", "target": "device.display", "action": "direct" },
       { "source": "mo_ta", "target": "note[0].text", "action": "direct" },

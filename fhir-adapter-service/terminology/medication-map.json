@@ -1,0 +1,118 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "vn-emr-medication-map",
+  "name": "VNEMRMedicationMap",
+  "title": "Ánh xạ Mã thuốc EMR Việt Nam sang RxNorm / ATC",
+  "status": "active",
+  "description": "Bảng ánh xạ mã thuốc (hoạt chất) phổ biến tại bệnh viện Việt Nam sang mã ATC (WHO) quốc tế.",
+  "sourceUri": "http://hospital.vn/fhir/CodeSystem/ma-thuoc",
+  "targetUri": "http://www.whocc.no/atc",
+  "group": [
+    {
+      "source": "http://hospital.vn/fhir/CodeSystem/ma-thuoc",
+      "target": "http://www.whocc.no/atc",
+      "element": [
+        {
+          "code": "PARA500",
+          "display": "Paracetamol 500mg",
+          "target": [{ "code": "N02BE01", "display": "Paracetamol", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "AMOX500",
+          "display": "Amoxicillin 500mg",
+          "target": [{ "code": "J01CA04", "display": "Amoxicillin", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "METF500",
+          "display": "Metformin 500mg",
+          "target": [{ "code": "A10BA02", "display": "Metformin", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "AMLO5",
+          "display": "Amlodipine 5mg",
+          "target": [{ "code": "C08CA01", "display": "Amlodipine", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "OMEP20",
+          "display": "Omeprazole 20mg",
+          "target": [{ "code": "A02BC01", "display": "Omeprazole", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "ATOR20",
+          "display": "Atorvastatin 20mg",
+          "target": [{ "code": "C10AA05", "display": "Atorvastatin", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "LOSA50",
+          "display": "Losartan 50mg",
+          "target": [{ "code": "C09CA01", "display": "Losartan", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "CEFO1G",
+          "display": "Cefotaxime 1g (tiêm)",
+          "target": [{ "code": "J01DD01", "display": "Cefotaxime", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "CIPR500",
+          "display": "Ciprofloxacin 500mg",
+          "target": [{ "code": "J01MA02", "display": "Ciprofloxacin", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "PRED5",
+          "display": "Prednisolone 5mg",
+          "target": [{ "code": "H02AB06", "display": "Prednisolone", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "IBUP400",
+          "display": "Ibuprofen 400mg",
+          "target": [{ "code": "M01AE01", "display": "Ibuprofen", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "DICL50",
+          "display": "Diclofenac 50mg",
+          "target": [{ "code": "M01AB05", "display": "Diclofenac", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "ASPI81",
+          "display": "Aspirin 81mg",
+          "target": [{ "code": "B01AC06", "display": "Acetylsalicylic acid", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "CLOP75",
+          "display": "Clopidogrel 75mg",
+          "target": [{ "code": "B01AC04", "display": "Clopidogrel", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "INSU100",
+          "display": "Insulin 100IU/ml (tiêm)",
+          "target": [{ "code": "A10AB01", "display": "Insulin (human)", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "SALB2",
+          "display": "Salbutamol 2mg (hít)",
+          "target": [{ "code": "R03AC02", "display": "Salbutamol", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "DOPA250",
+          "display": "Levodopa/Carbidopa 250/25mg",
+          "target": [{ "code": "N04BA02", "display": "Levodopa and decarboxylase inhibitor", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "FURO40",
+          "display": "Furosemide 40mg",
+          "target": [{ "code": "C03CA01", "display": "Furosemide", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "WARF5",
+          "display": "Warfarin 5mg",
+          "target": [{ "code": "B01AA03", "display": "Warfarin", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "DIGO0.25",
+          "display": "Digoxin 0.25mg",
+          "target": [{ "code": "C01AA05", "display": "Digoxin", "equivalence": "equivalent" }]
+        }
+      ]
+    }
+  ]
+}

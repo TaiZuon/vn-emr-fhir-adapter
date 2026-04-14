@@ -162,6 +162,22 @@ def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
             dr = random.choice(doctors)
             ngay_vao = fake.date_time_between(start_date='-1y', end_date='now')
             ngay_ra = ngay_vao + timedelta(days=random.randint(1, 30))
+            diagnosis_choices = [
+                ("J00", "Viêm mũi họng cấp tính"),
+                ("J06.9", "Nhiễm khuẩn hô hấp trên cấp"),
+                ("J18.9", "Viêm phổi"),
+                ("E11.9", "Đái tháo đường type 2"),
+                ("I10", "Tăng huyết áp"),
+                ("I50.9", "Suy tim"),
+                ("K21.0", "Trào ngược dạ dày thực quản"),
+                ("K29.7", "Viêm dạ dày"),
+                ("K35.80", "Viêm ruột thừa cấp"),
+                ("N39.0", "Nhiễm khuẩn đường tiết niệu"),
+                ("M54.5", "Đau thắt lưng"),
+                ("A09", "Tiêu chảy nhiễm khuẩn"),
+                ("D50.9", "Thiếu máu thiếu sắt"),
+            ]
+            ma_benh, ten_benh = random.choice(diagnosis_choices)
             encounter = models.DotDieuTri(
                 ma_lk=f"LK{str(uuid.uuid4()).replace('-', '').upper()[:20]}",
                 benh_nhan_id=patient.id,
@@ -170,7 +186,8 @@ def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
                 ngay_ra=ngay_ra,
                 ma_the=f"GD479{random.randint(1000000000, 9999999999)}",
                 ma_dkbd="01001",
-                ten_benh=random.choice(["Sốt xuất huyết", "Viêm phổi", "Viêm phế quản", "Đau ruột thừa"]),
+                ma_benh=ma_benh,
+                ten_benh=ten_benh,
                 tinh_trang_rv=random.choice([1, 2, 3, 4])
             )
             db.add(encounter)
@@ -178,7 +195,22 @@ def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
             db.refresh(encounter)
 
             # Thuoc
-            for t_stt in range(1, random.randint(2, 5) + 1):
+            medication_choices = [
+                ("PARA500", "Paracetamol 500mg", "Viên", "500mg", "Uống"),
+                ("AMOX500", "Amoxicillin 500mg", "Viên", "500mg", "Uống"),
+                ("METF500", "Metformin 500mg", "Viên", "500mg", "Uống"),
+                ("AMLO5", "Amlodipine 5mg", "Viên", "5mg", "Uống"),
+                ("OMEP20", "Omeprazole 20mg", "Viên", "20mg", "Uống"),
+                ("ATOR20", "Atorvastatin 20mg", "Viên", "20mg", "Uống"),
+                ("LOSA50", "Losartan 50mg", "Viên", "50mg", "Uống"),
+                ("CEFO1G", "Cefotaxime 1g", "Lọ", "1g", "Tiêm tĩnh mạch"),
+                ("CIPR500", "Ciprofloxacin 500mg", "Viên", "500mg", "Uống"),
+                ("IBUP400", "Ibuprofen 400mg", "Viên", "400mg", "Uống"),
+                ("FURO40", "Furosemide 40mg", "Viên", "40mg", "Uống"),
+                ("SALB2", "Salbutamol 2mg", "Viên", "2mg", "Hít"),
+            ]
+            selected_meds = random.sample(medication_choices, k=random.randint(2, 5))
+            for t_stt, (ma_thuoc, ten_thuoc, dvt, ham_luong, duong_dung) in enumerate(selected_meds, 1):
                 ma_don_thuoc = f"{''.join(random.choices(string.ascii_uppercase, k=5))}{''.join(random.choices(string.digits, k=7))}-{random.choice(string.digits)}"
                 sl = float(random.randint(1, 20))
                 gia = float(random.randint(10, 500) * 1000)
@@ -186,8 +218,12 @@ def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
                     dot_dieu_tri_id=encounter.ma_lk,
                     ma_don_thuoc=ma_don_thuoc,
                     stt=t_stt,
-                    ten_thuoc=f"Thuốc {fake.word()}",
-                    don_vi_tinh="Viên",
+                    ma_thuoc=ma_thuoc,
+                    ten_thuoc=ten_thuoc,
+                    ham_luong=ham_luong,
+                    don_vi_tinh=dvt,
+                    duong_dung=duong_dung,
+                    lieu_dung=f"{random.randint(1,3)} lần/ngày",
                     so_luong=sl,
                     don_gia=gia,
                     thanh_tien=sl * gia,
@@ -197,13 +233,27 @@ def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
                 db.add(thuoc)
         
             # DichVuKyThuat
-            for d_stt in range(1, random.randint(1, 4) + 1):
+            procedure_choices = [
+                ("PT004", "Nội soi dạ dày"),
+                ("PT006", "Chụp X-quang ngực"),
+                ("PT007", "Chụp CT Scanner"),
+                ("PT009", "Siêu âm ổ bụng"),
+                ("PT010", "Siêu âm tim"),
+                ("PT011", "Điện tâm đồ (ECG)"),
+                ("PT013", "Thở oxy"),
+                ("PT014", "Truyền dịch"),
+                ("PT016", "Khâu vết thương"),
+                ("PT018", "Vật lý trị liệu"),
+            ]
+            selected_procs = random.sample(procedure_choices, k=random.randint(1, 4))
+            for d_stt, (ma_dv, ten_dv) in enumerate(selected_procs, 1):
                 sl = float(random.randint(1, 5))
                 gia = float(random.randint(50, 2000) * 1000)
                 dv = models.DichVuKyThuat(
                     dot_dieu_tri_id=encounter.ma_lk,
                     stt=d_stt,
-                    ten_dich_vu=f"Dịch vụ {fake.word()}",
+                    ma_dich_vu=ma_dv,
+                    ten_dich_vu=ten_dv,
                     so_luong=sl,
                     don_gia=gia,
                     thanh_tien=sl * gia,

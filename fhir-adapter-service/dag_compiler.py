@@ -110,17 +110,23 @@ class DAGCompiler:
                     return {} # Cache miss and Mongo miss, skip referencing
                 final_val = resolved
             elif action_type == "lookup":
-                # Inject TerminologyService as requested
-                if target == "gender":
-                    translated = terminology_service.translate_code("local-gender", str(val))
-                    final_val = translated.get("code", val)
-                elif target == "status":
-                    translated = terminology_service.translate_code("local-encounter-status", str(val))
+                system = rule.get("system")
+                if system:
+                    translated = terminology_service.translate_code(system, str(val))
                     final_val = translated.get("code", val)
                 else:
-                    # Fallback to local map if available
+                    # Fallback to inline map if no system specified
                     rule_map = rule.get("map", {})
-                    final_val = rule_map.get(val, val)
+                    final_val = rule_map.get(str(val), val)
+            elif action_type == "terminology_lookup":
+                # Full terminology translation: returns {code, display, system} object
+                system = rule.get("system", "")
+                translated = terminology_service.translate_code(system, str(val))
+                final_val = {
+                    "code": translated.get("code", str(val)),
+                    "display": translated.get("display", ""),
+                    "system": translated.get("system", "")
+                }
                     
             res = {}
             set_nested(res, target, final_val)

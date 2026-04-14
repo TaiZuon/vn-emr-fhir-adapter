@@ -1,0 +1,118 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "vn-emr-procedure-map",
+  "name": "VNEMRProcedureMap",
+  "title": "Ánh xạ Mã dịch vụ kỹ thuật EMR Việt Nam sang SNOMED CT / ICD-9-CM",
+  "status": "active",
+  "description": "Bảng ánh xạ mã dịch vụ kỹ thuật nội bộ bệnh viện sang mã SNOMED CT hoặc ICD-9-CM quốc tế.",
+  "sourceUri": "http://hospital.vn/fhir/CodeSystem/ma-dich-vu",
+  "targetUri": "http://snomed.info/sct",
+  "group": [
+    {
+      "source": "http://hospital.vn/fhir/CodeSystem/ma-dich-vu",
+      "target": "http://snomed.info/sct",
+      "element": [
+        {
+          "code": "PT001",
+          "display": "Phẫu thuật ruột thừa",
+          "target": [{ "code": "80146002", "display": "Appendectomy", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT002",
+          "display": "Phẫu thuật cắt túi mật nội soi",
+          "target": [{ "code": "45595009", "display": "Laparoscopic cholecystectomy", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT003",
+          "display": "Phẫu thuật mổ lấy thai",
+          "target": [{ "code": "11466000", "display": "Cesarean section", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT004",
+          "display": "Nội soi dạ dày",
+          "target": [{ "code": "386838006", "display": "Esophagogastroduodenoscopy", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "PT005",
+          "display": "Nội soi đại tràng",
+          "target": [{ "code": "73761001", "display": "Colonoscopy", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT006",
+          "display": "Chụp X-quang ngực",
+          "target": [{ "code": "399208008", "display": "Plain chest X-ray", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT007",
+          "display": "Chụp CT Scanner",
+          "target": [{ "code": "77477000", "display": "Computerized axial tomography", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT008",
+          "display": "Chụp MRI",
+          "target": [{ "code": "113091000", "display": "Magnetic resonance imaging", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT009",
+          "display": "Siêu âm ổ bụng",
+          "target": [{ "code": "45036003", "display": "Ultrasonography of abdomen", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT010",
+          "display": "Siêu âm tim",
+          "target": [{ "code": "40701008", "display": "Echocardiography", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT011",
+          "display": "Điện tâm đồ (ECG)",
+          "target": [{ "code": "29303009", "display": "Electrocardiographic procedure", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT012",
+          "display": "Điện não đồ (EEG)",
+          "target": [{ "code": "54550000", "display": "Electroencephalogram", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT013",
+          "display": "Thở oxy",
+          "target": [{ "code": "57485005", "display": "Oxygen therapy", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT014",
+          "display": "Truyền dịch",
+          "target": [{ "code": "47625008", "display": "Intravenous infusion", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT015",
+          "display": "Đặt nội khí quản",
+          "target": [{ "code": "112798008", "display": "Insertion of endotracheal tube", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT016",
+          "display": "Khâu vết thương",
+          "target": [{ "code": "18557009", "display": "Suture of skin", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "PT017",
+          "display": "Bó bột gãy xương",
+          "target": [{ "code": "274474001", "display": "Application of cast", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT018",
+          "display": "Vật lý trị liệu",
+          "target": [{ "code": "91251008", "display": "Physical therapy procedure", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT019",
+          "display": "Lọc máu (Chạy thận nhân tạo)",
+          "target": [{ "code": "302497006", "display": "Hemodialysis", "equivalence": "equal" }]
+        },
+        {
+          "code": "PT020",
+          "display": "Sinh thiết",
+          "target": [{ "code": "86273004", "display": "Biopsy", "equivalence": "equal" }]
+        }
+      ]
+    }
+  ]
+}

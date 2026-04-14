@@ -1,0 +1,118 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "vn-emr-icd10-map",
+  "name": "VNEMRICD10Map",
+  "title": "Ánh xạ Mã bệnh ICD-10 EMR Việt Nam sang ICD-10 quốc tế",
+  "status": "active",
+  "description": "Bảng ánh xạ mã chẩn đoán theo QD130/BYT sang ICD-10 chuẩn WHO. Mã ICD-10 Việt Nam tuân theo bảng phân loại quốc tế ICD-10-CM.",
+  "sourceUri": "http://hospital.vn/fhir/CodeSystem/ma-benh",
+  "targetUri": "http://hl7.org/fhir/sid/icd-10",
+  "group": [
+    {
+      "source": "http://hospital.vn/fhir/CodeSystem/ma-benh",
+      "target": "http://hl7.org/fhir/sid/icd-10",
+      "element": [
+        {
+          "code": "J00",
+          "display": "Viêm mũi họng cấp tính",
+          "target": [{ "code": "J00", "display": "Acute nasopharyngitis [common cold]", "equivalence": "equal" }]
+        },
+        {
+          "code": "J06.9",
+          "display": "Nhiễm khuẩn hô hấp trên cấp, không xác định",
+          "target": [{ "code": "J06.9", "display": "Acute upper respiratory infection, unspecified", "equivalence": "equal" }]
+        },
+        {
+          "code": "J18.9",
+          "display": "Viêm phổi, không xác định",
+          "target": [{ "code": "J18.9", "display": "Pneumonia, unspecified organism", "equivalence": "equal" }]
+        },
+        {
+          "code": "J45",
+          "display": "Hen phế quản",
+          "target": [{ "code": "J45", "display": "Asthma", "equivalence": "equal" }]
+        },
+        {
+          "code": "E11.9",
+          "display": "Đái tháo đường type 2, không biến chứng",
+          "target": [{ "code": "E11.9", "display": "Type 2 diabetes mellitus without complications", "equivalence": "equal" }]
+        },
+        {
+          "code": "E11.65",
+          "display": "Đái tháo đường type 2 có tăng đường huyết",
+          "target": [{ "code": "E11.65", "display": "Type 2 diabetes mellitus with hyperglycemia", "equivalence": "equal" }]
+        },
+        {
+          "code": "I10",
+          "display": "Tăng huyết áp vô căn (nguyên phát)",
+          "target": [{ "code": "I10", "display": "Essential (primary) hypertension", "equivalence": "equal" }]
+        },
+        {
+          "code": "I25.10",
+          "display": "Bệnh tim thiếu máu cục bộ do xơ vữa động mạch",
+          "target": [{ "code": "I25.10", "display": "Atherosclerotic heart disease of native coronary artery without angina pectoris", "equivalence": "equal" }]
+        },
+        {
+          "code": "I50.9",
+          "display": "Suy tim, không xác định",
+          "target": [{ "code": "I50.9", "display": "Heart failure, unspecified", "equivalence": "equal" }]
+        },
+        {
+          "code": "K21.0",
+          "display": "Trào ngược dạ dày thực quản có viêm thực quản",
+          "target": [{ "code": "K21.0", "display": "Gastro-esophageal reflux disease with esophagitis", "equivalence": "equal" }]
+        },
+        {
+          "code": "K29.7",
+          "display": "Viêm dạ dày, không xác định",
+          "target": [{ "code": "K29.70", "display": "Gastritis, unspecified, without bleeding", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "K35.80",
+          "display": "Viêm ruột thừa cấp, không xác định",
+          "target": [{ "code": "K35.80", "display": "Unspecified acute appendicitis", "equivalence": "equal" }]
+        },
+        {
+          "code": "N18.9",
+          "display": "Bệnh thận mạn, không xác định giai đoạn",
+          "target": [{ "code": "N18.9", "display": "Chronic kidney disease, unspecified", "equivalence": "equal" }]
+        },
+        {
+          "code": "N39.0",
+          "display": "Nhiễm khuẩn đường tiết niệu, vị trí không xác định",
+          "target": [{ "code": "N39.0", "display": "Urinary tract infection, site not specified", "equivalence": "equal" }]
+        },
+        {
+          "code": "M54.5",
+          "display": "Đau thắt lưng",
+          "target": [{ "code": "M54.5", "display": "Low back pain", "equivalence": "equal" }]
+        },
+        {
+          "code": "G43.909",
+          "display": "Đau nửa đầu Migraine, không xác định",
+          "target": [{ "code": "G43.909", "display": "Migraine, unspecified, not intractable, without status migrainosus", "equivalence": "equal" }]
+        },
+        {
+          "code": "A09",
+          "display": "Tiêu chảy và viêm dạ dày ruột có nguồn gốc nhiễm khuẩn",
+          "target": [{ "code": "A09", "display": "Infectious gastroenteritis and colitis, unspecified", "equivalence": "equal" }]
+        },
+        {
+          "code": "B34.9",
+          "display": "Nhiễm virus, không xác định",
+          "target": [{ "code": "B34.9", "display": "Viral infection, unspecified", "equivalence": "equal" }]
+        },
+        {
+          "code": "D50.9",
+          "display": "Thiếu máu thiếu sắt, không xác định",
+          "target": [{ "code": "D50.9", "display": "Iron deficiency anemia, unspecified", "equivalence": "equal" }]
+        },
+        {
+          "code": "S52.509A",
+          "display": "Gãy xương cẳng tay, không xác định",
+          "target": [{ "code": "S52.509A", "display": "Unspecified fracture of the lower end of unspecified radius, initial encounter", "equivalence": "equivalent" }]
+        }
+      ]
+    }
+  ]
+}
