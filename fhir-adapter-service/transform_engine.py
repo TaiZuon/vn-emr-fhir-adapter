@@ -26,7 +26,11 @@ class TransformEngine:
         """Hàm helper để gán giá trị vào path phức tạp của FHIR"""
         try:
             if path == "id":
-                obj.id = str(value)  # [QUAN TRỌNG] Ép kiểu int sang string cho FHIR ID
+                id_str = str(value)
+                # HAPI FHIR yêu cầu ID chứa ít nhất 1 ký tự không phải số
+                if id_str.isdigit():
+                    id_str = f"emr-{id_str}"
+                obj.id = id_str
             elif path == "name[0].text":
                 obj.name = [HumanName(text=value)]
             elif path == "identifier[0].value":
