@@ -1,0 +1,148 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "vn-emr-loinc-lab-map",
+  "name": "VNEMRLOINCLabMap",
+  "title": "Ánh xạ Mã xét nghiệm EMR Việt Nam sang LOINC",
+  "status": "active",
+  "description": "Bảng ánh xạ mã xét nghiệm nội bộ bệnh viện sang mã LOINC chuẩn quốc tế, theo QD130/BYT.",
+  "sourceUri": "http://hospital.vn/fhir/CodeSystem/ma-xet-nghiem",
+  "targetUri": "http://loinc.org",
+  "group": [
+    {
+      "source": "http://hospital.vn/fhir/CodeSystem/ma-xet-nghiem",
+      "target": "http://loinc.org",
+      "element": [
+        {
+          "code": "2339-0",
+          "display": "Glucose máu",
+          "target": [{ "code": "2339-0", "display": "Glucose [Mass/volume] in Blood", "equivalence": "equal" }]
+        },
+        {
+          "code": "6690-2",
+          "display": "Bạch cầu (WBC)",
+          "target": [{ "code": "6690-2", "display": "Leukocytes [#/volume] in Blood by Automated count", "equivalence": "equal" }]
+        },
+        {
+          "code": "718-7",
+          "display": "Hemoglobin máu",
+          "target": [{ "code": "718-7", "display": "Hemoglobin [Mass/volume] in Blood", "equivalence": "equal" }]
+        },
+        {
+          "code": "2160-0",
+          "display": "Creatinine máu",
+          "target": [{ "code": "2160-0", "display": "Creatinine [Mass/volume] in Serum or Plasma", "equivalence": "equal" }]
+        },
+        {
+          "code": "1742-6",
+          "display": "ALT (SGPT)",
+          "target": [{ "code": "1742-6", "display": "Alanine aminotransferase [Enzymatic activity/volume] in Serum or Plasma", "equivalence": "equal" }]
+        },
+        {
+          "code": "1920-8",
+          "display": "AST (SGOT)",
+          "target": [{ "code": "1920-8", "display": "Aspartate aminotransferase [Enzymatic activity/volume] in Serum or Plasma", "equivalence": "equal" }]
+        },
+        {
+          "code": "2885-2",
+          "display": "Protein toàn phần",
+          "target": [{ "code": "2885-2", "display": "Protein [Mass/volume] in Serum or Plasma", "equivalence": "equal" }]
+        },
+        {
+          "code": "1751-7",
+          "display": "Albumin máu",
+          "target": [{ "code": "1751-7", "display": "Albumin [Mass/volume] in Serum or Plasma", "equivalence": "equal" }]
+        },
+        {
+          "code": "2345-7",
+          "display": "Glucose máu lúc đói",
+          "target": [{ "code": "2345-7", "display": "Glucose [Mass/volume] in Serum or Plasma", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "4548-4",
+          "display": "HbA1c",
+          "target": [{ "code": "4548-4", "display": "Hemoglobin A1c/Hemoglobin.total in Blood", "equivalence": "equal" }]
+        },
+        {
+          "code": "2093-3",
+          "display": "Cholesterol toàn phần",
+          "target": [{ "code": "2093-3", "display": "Cholesterol [Mass/volume] in Serum or Plasma", "equivalence": "equal" }]
+        },
+        {
+          "code": "2571-8",
+          "display": "Triglyceride",
+          "target": [{ "code": "2571-8", "display": "Triglyceride [Mass/volume] in Serum or Plasma", "equivalence": "equal" }]
+        },
+        {
+          "code": "2085-9",
+          "display": "Cholesterol HDL",
+          "target": [{ "code": "2085-9", "display": "Cholesterol in HDL [Mass/volume] in Serum or Plasma", "equivalence": "equal" }]
+        },
+        {
+          "code": "2089-1",
+          "display": "Cholesterol LDL",
+          "target": [{ "code": "2089-1", "display": "Cholesterol in LDL [Mass/volume] in Serum or Plasma", "equivalence": "equal" }]
+        },
+        {
+          "code": "6299-2",
+          "display": "Ure máu (BUN)",
+          "target": [{ "code": "6299-2", "display": "Urea nitrogen [Mass/volume] in Blood", "equivalence": "equal" }]
+        },
+        {
+          "code": "3094-0",
+          "display": "Ure nitrogen máu",
+          "target": [{ "code": "3094-0", "display": "Urea nitrogen [Mass/volume] in Serum or Plasma", "equivalence": "equivalent" }]
+        },
+        {
+          "code": "777-3",
+          "display": "Tiểu cầu",
+          "target": [{ "code": "777-3", "display": "Platelets [#/volume] in Blood by Automated count", "equivalence": "equal" }]
+        },
+        {
+          "code": "789-8",
+          "display": "Hồng cầu (RBC)",
+          "target": [{ "code": "789-8", "display": "Erythrocytes [#/volume] in Blood by Automated count", "equivalence": "equal" }]
+        },
+        {
+          "code": "4544-3",
+          "display": "Hematocrit",
+          "target": [{ "code": "4544-3", "display": "Hematocrit [Volume Fraction] of Blood by Automated count", "equivalence": "equal" }]
+        },
+        {
+          "code": "5902-2",
+          "display": "Thời gian prothrombin (PT)",
+          "target": [{ "code": "5902-2", "display": "Prothrombin time (PT)", "equivalence": "equal" }]
+        },
+        {
+          "code": "3173-2",
+          "display": "Thời gian thromboplastin hoạt hoá (APTT)",
+          "target": [{ "code": "3173-2", "display": "aPTT in Blood by Coagulation assay", "equivalence": "equal" }]
+        },
+        {
+          "code": "14749-6",
+          "display": "Glucose niệu",
+          "target": [{ "code": "14749-6", "display": "Glucose [Presence] in Urine by Test strip", "equivalence": "equal" }]
+        },
+        {
+          "code": "5811-5",
+          "display": "Tỷ trọng nước tiểu",
+          "target": [{ "code": "5811-5", "display": "Specific gravity of Urine by Test strip", "equivalence": "equal" }]
+        },
+        {
+          "code": "5803-2",
+          "display": "pH nước tiểu",
+          "target": [{ "code": "5803-2", "display": "pH of Urine by Test strip", "equivalence": "equal" }]
+        },
+        {
+          "code": "30341-2",
+          "display": "Tốc độ lắng hồng cầu (ESR)",
+          "target": [{ "code": "30341-2", "display": "Erythrocyte sedimentation rate", "equivalence": "equal" }]
+        },
+        {
+          "code": "1988-5",
+          "display": "CRP (Protein phản ứng C)",
+          "target": [{ "code": "1988-5", "display": "C reactive protein [Mass/volume] in Serum or Plasma", "equivalence": "equal" }]
+        }
+      ]
+    }
+  ]
+}

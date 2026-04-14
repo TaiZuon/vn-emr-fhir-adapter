@@ -1,0 +1,32 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "vn-emr-gender-map",
+  "name": "VNEMRGenderMap",
+  "title": "Ánh xạ Giới tính EMR Việt Nam sang FHIR AdministrativeGender",
+  "status": "active",
+  "sourceUri": "http://hospital.vn/fhir/CodeSystem/gioi-tinh",
+  "targetUri": "http://hl7.org/fhir/administrative-gender",
+  "group": [
+    {
+      "source": "http://hospital.vn/fhir/CodeSystem/gioi-tinh",
+      "target": "http://hl7.org/fhir/administrative-gender",
+      "element": [
+        {
+          "code": "1",
+          "display": "Nam",
+          "target": [{ "code": "male", "display": "Male", "equivalence": "equal" }]
+        },
+        {
+          "code": "2",
+          "display": "Nữ",
+          "target": [{ "code": "female", "display": "Female", "equivalence": "equal" }]
+        },
+        {
+          "code": "3",
+          "display": "Không xác định",
+          "target": [{ "code": "other", "display": "Other", "equivalence": "equivalent" }]
+        }
+      ]
+    }
+  ]
+}

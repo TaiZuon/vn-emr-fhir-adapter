@@ -1,59 +1,94 @@
 import json
+import os
+import glob
 from typing import Dict, Any, Optional
 
 class TerminologyService:
     """
     Module 4: Translation Module.
     Handles mapping local hospital codes to standard international terminologies
-    (e.g., ICD-10, LOINC, SNOMED-CT) using a ConceptMap.
+    (e.g., ICD-10, LOINC, SNOMED-CT) using FHIR ConceptMap resources.
+    
+    Loads all ConceptMap JSON files from the terminology/ directory at startup.
+    Each file follows the FHIR ConceptMap structure and is flattened into a
+    lookup dictionary keyed by ConceptMap ID.
     """
-    def __init__(self, concept_map_path: Optional[str] = None):
-        # Mock ConceptMap: System -> Local Code -> Standard Mapping
-        self.concept_map = {
-            "local-diagnosis": {
-                "J00": {"code": "J00", "display": "Acute nasopharyngitis [common cold]", "system": "http://hl7.org/fhir/sid/icd-10"},
-                "D01": {"code": "E11.9", "display": "Type 2 diabetes mellitus without complications", "system": "http://hl7.org/fhir/sid/icd-10"}
-            },
-            "local-lab": {
-                "GLU01": {"code": "2339-0", "display": "Glucose [Mass/volume] in Blood", "system": "http://loinc.org"},
-                "WBC01": {"code": "6690-2", "display": "Leukocytes [#/volume] in Blood by Automated count", "system": "http://loinc.org"}
-            },
-            "local-gender": {
-                 "1": {"code": "male", "display": "Male", "system": "http://hl7.org/fhir/administrative-gender"},
-                 "2": {"code": "female", "display": "Female", "system": "http://hl7.org/fhir/administrative-gender"},
-                 "3": {"code": "other", "display": "Other", "system": "http://hl7.org/fhir/administrative-gender"}
-            },
-            "local-encounter-status": {
-                "1": {"code": "finished", "display": "Finished", "system": "http://hl7.org/fhir/encounter-status"},
-                "2": {"code": "in-progress", "display": "In Progress", "system": "http://hl7.org/fhir/encounter-status"},
-                "3": {"code": "cancelled", "display": "Cancelled", "system": "http://hl7.org/fhir/encounter-status"}
-            }
-        }
+    def __init__(self, terminology_dir: Optional[str] = None):
+        self.concept_map: Dict[str, Dict[str, Dict[str, str]]] = {}
         
-        if concept_map_path:
-            self.load_concept_map(concept_map_path)
-            
-    def load_concept_map(self, file_path: str):
+        if terminology_dir is None:
+            terminology_dir = os.path.join(os.path.dirname(__file__), "terminology")
+        
+        self._load_all_concept_maps(terminology_dir)
+
+    def _load_all_concept_maps(self, directory: str):
         """
-        Loads mappings from an external JSON file.
+        Scans the terminology directory for *.json files and loads each
+        as a FHIR ConceptMap resource.
+        """
+        if not os.path.isdir(directory):
+            print(f" [!] Terminology directory not found: {directory}")
+            return
+        
+        json_files = sorted(glob.glob(os.path.join(directory, "*.json")))
+        for file_path in json_files:
+            self._load_concept_map_file(file_path)
+
+        print(f" [Terminology] Loaded {len(json_files)} ConceptMap file(s) from {directory}")
+        print(f" [Terminology] Available systems: {list(self.concept_map.keys())}")
+
+    def _load_concept_map_file(self, file_path: str):
+        """
+        Loads a single FHIR ConceptMap JSON file and flattens it into the
+        internal concept_map dictionary.
+        
+        ConceptMap structure:
+          { "id": "system-key", "group": [{ "element": [{ "code": "1", 
+            "target": [{ "code": "male", "display": "Male" }] }] }] }
+        
+        Flattened to:
+          concept_map["system-key"]["1"] = {"code": "male", "display": "Male", "system": "..."}
         """
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
-                external_map = json.load(f)
-                # Merge into existing concepts
-                for sys_key, mappings in external_map.items():
-                    if sys_key not in self.concept_map:
-                        self.concept_map[sys_key] = {}
-                    self.concept_map[sys_key].update(mappings)
-            print(f" [Terminology] Loaded ConceptMap from {file_path}")
+                cm = json.load(f)
+            
+            cm_id = cm.get("id")
+            if not cm_id:
+                print(f" [!] Skipping {file_path}: no 'id' field")
+                return
+            
+            if cm_id not in self.concept_map:
+                self.concept_map[cm_id] = {}
+            
+            for group in cm.get("group", []):
+                target_system = group.get("target", "")
+                for element in group.get("element", []):
+                    source_code = element.get("code")
+                    targets = element.get("target", [])
+                    if source_code and targets:
+                        t = targets[0]  # Take first target mapping
+                        self.concept_map[cm_id][source_code] = {
+                            "code": t.get("code", source_code),
+                            "display": t.get("display", ""),
+                            "system": target_system
+                        }
+            
+            print(f" [Terminology] Loaded ConceptMap '{cm_id}' ({len(self.concept_map[cm_id])} codes) from {os.path.basename(file_path)}")
         except Exception as e:
             print(f" [!] Warning: Could not load ConceptMap from {file_path}: {e}")
 
     def translate_code(self, system: str, local_code: str) -> Dict[str, str]:
         """
         Translates a local code to a standard terminology code.
-        Returns a dictionary containing 'code', 'display', and 'system'.
-        Fallback: If code is not found, returns the original code with a local unmapped system flag.
+        
+        Args:
+            system: The ConceptMap ID (e.g., 'vn-emr-gender-map', 'vn-emr-icd10-map')
+            local_code: The source code to translate
+            
+        Returns:
+            Dictionary with 'code', 'display', and 'system' keys.
+            Falls back gracefully if mapping is not found.
         """
         if system in self.concept_map and local_code in self.concept_map[system]:
             return self.concept_map[system][local_code]
@@ -61,9 +96,17 @@ class TerminologyService:
         # Graceful fallback for missing mappings
         return {
             "code": str(local_code),
-            "display": f"Unknown {system} code: {local_code}",
+            "display": f"Unmapped ({system}): {local_code}",
             "system": f"http://hospital.vn/fhir/CodeSystem/{system}-unmapped"
         }
+
+    def get_available_systems(self) -> list:
+        """Returns list of all loaded ConceptMap IDs."""
+        return list(self.concept_map.keys())
+    
+    def get_mapping_count(self, system: str) -> int:
+        """Returns number of mappings for a given system."""
+        return len(self.concept_map.get(system, {}))
 
 # Initialize global instance
 terminology_service = TerminologyService()
@@ -74,11 +117,30 @@ terminology_service = TerminologyService()
 if __name__ == "__main__":
     service = TerminologyService()
     
-    print("1. Translating internal gender code '1' (Nam):")
-    print(json.dumps(service.translate_code("local-gender", "1"), indent=2))
+    print("\n=== Available Systems ===")
+    for sys_id in service.get_available_systems():
+        print(f"  {sys_id}: {service.get_mapping_count(sys_id)} codes")
     
-    print("\n2. Translating internal diagnosis code 'D01':")
-    print(json.dumps(service.translate_code("local-diagnosis", "D01"), indent=2))
+    print("\n1. Translating gender code '1' (Nam):")
+    print(json.dumps(service.translate_code("vn-emr-gender-map", "1"), indent=2))
     
-    print("\n3. Testing Fallback (Unknown Lab Code 'XYZ-99'):")
-    print(json.dumps(service.translate_code("local-lab", "XYZ-99"), indent=2))
+    print("\n2. Translating gender code '2' (Nữ):")
+    print(json.dumps(service.translate_code("vn-emr-gender-map", "2"), indent=2))
+    
+    print("\n3. Translating encounter status '1' (Hoàn thành):")
+    print(json.dumps(service.translate_code("vn-emr-encounter-status-map", "1"), indent=2))
+    
+    print("\n4. Translating ICD-10 code 'I10' (Tăng huyết áp):")
+    print(json.dumps(service.translate_code("vn-emr-icd10-map", "I10"), indent=2))
+    
+    print("\n5. Translating LOINC code '2339-0' (Glucose):")
+    print(json.dumps(service.translate_code("vn-emr-loinc-lab-map", "2339-0"), indent=2))
+    
+    print("\n6. Translating medication 'PARA500' (Paracetamol):")
+    print(json.dumps(service.translate_code("vn-emr-medication-map", "PARA500"), indent=2))
+    
+    print("\n7. Translating procedure 'PT006' (X-quang):")
+    print(json.dumps(service.translate_code("vn-emr-procedure-map", "PT006"), indent=2))
+    
+    print("\n8. Testing Fallback (Unknown code):")
+    print(json.dumps(service.translate_code("vn-emr-loinc-lab-map", "XYZ-99"), indent=2))

@@ -1,0 +1,32 @@
+{
+  "resourceType": "ConceptMap",
+  "id": "vn-emr-encounter-status-map",
+  "name": "VNEMREncounterStatusMap",
+  "title": "Ánh xạ Trạng thái Đợt điều trị EMR Việt Nam sang FHIR EncounterStatus",
+  "status": "active",
+  "sourceUri": "http://hospital.vn/fhir/CodeSystem/trang-thai-dieu-tri",
+  "targetUri": "http://hl7.org/fhir/encounter-status",
+  "group": [
+    {
+      "source": "http://hospital.vn/fhir/CodeSystem/trang-thai-dieu-tri",
+      "target": "http://hl7.org/fhir/encounter-status",
+      "element": [
+        {
+          "code": "1",
+          "display": "Hoàn thành",
+          "target": [{ "code": "finished", "display": "Finished", "equivalence": "equal" }]
+        },
+        {
+          "code": "2",
+          "display": "Đang điều trị",
+          "target": [{ "code": "in-progress", "display": "In Progress", "equivalence": "equal" }]
+        },
+        {
+          "code": "3",
+          "display": "Huỷ",
+          "target": [{ "code": "cancelled", "display": "Cancelled", "equivalence": "equal" }]
+        }
+      ]
+    }
+  ]
+}
