@@ -1,6 +1,7 @@
 # fhir-adapter-service/database_mongo.py
 from pymongo import MongoClient
 from fhir_client import hapi_client
+from crypto_service import crypto_service
 import json
 
 class FHIRStore:
@@ -29,10 +30,13 @@ class FHIRStore:
             if 'id' in resource_data:
                 resource_data['_id'] = resource_data['id']
 
-            # 1. Luôn lưu vào MongoDB
+            # Mã hóa các trường PII trước khi lưu vào MongoDB
+            encrypted_data = crypto_service.encrypt_resource(resource_data)
+
+            # 1. Luôn lưu vào MongoDB (dữ liệu đã mã hóa)
             collection.replace_one(
-                {'_id': resource_data['_id']},
-                resource_data,
+                {'_id': encrypted_data['_id']},
+                encrypted_data,
                 upsert=True
             )
             
@@ -52,6 +56,20 @@ class FHIRStore:
 
         except Exception as e:
             print(f" [❌] Lỗi lưu trữ: {e}")
+            return None
+
+    def get_resource(self, resource_type: str, resource_id: str) -> dict:
+        """
+        Lấy FHIR Resource từ MongoDB và giải mã các trường PII.
+        """
+        try:
+            collection = self.db[resource_type]
+            data = collection.find_one({"_id": resource_id})
+            if data:
+                return crypto_service.decrypt_resource(data)
+            return None
+        except Exception as e:
+            print(f" [❌] Lỗi đọc {resource_type}/{resource_id}: {e}")
             return None
 
 # Khởi tạo instance dùng chung
