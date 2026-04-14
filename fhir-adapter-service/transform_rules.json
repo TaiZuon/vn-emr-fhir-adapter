@@ -65,7 +65,7 @@
       { "source": "ngay_yl", "target": "authoredOn", "action": "date" },
       { "source": "dot_dieu_tri_id", "target": "encounter.reference", "action": "reference", "ref_type": "Encounter" },
       { "source": "ma_bac_si", "target": "requester.reference", "action": "reference", "ref_type": "Practitioner" },
-      { "source": "dot_dieu_tri_id", "target": "subject.reference", "action": "reference", "ref_type": "Encounter" }
+      { "source": "dot_dieu_tri_id", "target": "subject.reference", "action": "reference", "ref_type": "EncounterPatient" }
     ]
   },
   "dich_vu_ky_thuat": {
@@ -84,7 +84,7 @@
       { "source": "ngay_kq", "target": "occurrencePeriod.end", "action": "date" },
       { "source": "dot_dieu_tri_id", "target": "encounter.reference", "action": "reference", "ref_type": "Encounter" },
       { "source": "ma_bac_si", "target": "performer[0].actor.reference", "action": "reference", "ref_type": "Practitioner" },
-      { "source": "dot_dieu_tri_id", "target": "subject.reference", "action": "reference", "ref_type": "Encounter" }
+      { "source": "dot_dieu_tri_id", "target": "subject.reference", "action": "reference", "ref_type": "EncounterPatient" }
     ]
   },
   "can_lam_sang": {
@@ -111,7 +111,7 @@
       { "source": "phau_thuat", "target": "finding[0].item.concept.text", "action": "direct" },
       { "source": "ngay_yl", "target": "date", "action": "date" },
       { "source": "dot_dieu_tri_id", "target": "encounter.reference", "action": "reference", "ref_type": "Encounter" },
-      { "source": "dot_dieu_tri_id", "target": "subject.reference", "action": "reference", "ref_type": "Encounter" }
+      { "source": "dot_dieu_tri_id", "target": "subject.reference", "action": "reference", "ref_type": "EncounterPatient" }
     ]
   }
 }

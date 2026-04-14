@@ -107,6 +107,16 @@ def process_batch(channel, batch, delivery_tags, batch_properties=None):
                 # Lấy EMR key: ưu tiên ma_lk (dot_dieu_tri), rồi id (các bảng khác)
                 emr_key = data.get('ma_lk', data.get('id'))
                 ref_manager.add_mapping(res_type, emr_key, mongo_id)
+                
+                # Khi lưu Encounter, tạo thêm mapping ngược EncounterPatient
+                # để các resource con (MedicationRequest, Procedure...) resolve được Patient từ dot_dieu_tri_id
+                if res_type == 'Encounter' and data.get('benh_nhan_id'):
+                    patient_ref = ref_manager.resolve('Patient', data['benh_nhan_id'])
+                    if patient_ref:
+                        # patient_ref = "Patient/emr-182" -> lấy "emr-182"
+                        patient_id = patient_ref.split('/')[-1]
+                        ref_manager.add_mapping('EncounterPatient', emr_key, patient_id)
+                
                 log.info(f"Đã lưu {res_type} vào MongoDB với ID: {mongo_id}")
                 
         # Tất cả resource trong batch đã được process thành công, ta tiến hành ACK

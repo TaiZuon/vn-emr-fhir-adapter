@@ -83,7 +83,11 @@ class DAGCompiler:
             if action_type == "direct":
                 # Ensure FHIR ID is strictly cast to safe string
                 if target == "id":
-                    final_val = str(val)
+                    id_str = str(val)
+                    # HAPI FHIR yêu cầu ID chứa ít nhất 1 ký tự không phải số
+                    if id_str.isdigit():
+                        id_str = f"emr-{id_str}"
+                    final_val = id_str
                 else:
                     final_val = val
             elif action_type == "float":
@@ -108,6 +112,10 @@ class DAGCompiler:
                 resolved = ref_manager.resolve(ref_type, val)
                 if not resolved:
                     return {} # Cache miss and Mongo miss, skip referencing
+                # EncounterPatient là mapping ảo để resolve Patient từ dot_dieu_tri_id
+                # Kết quả trả về dạng "EncounterPatient/emr-182" -> đổi thành "Patient/emr-182"
+                if ref_type == "EncounterPatient":
+                    resolved = "Patient/" + resolved.split("/")[-1]
                 final_val = resolved
             elif action_type == "lookup":
                 system = rule.get("system")

@@ -60,6 +60,21 @@ services:
       ME_CONFIG_BASICAUTH_USERNAME: admin
       ME_CONFIG_BASICAUTH_PASSWORD: pass123
 
+  # HAPI FHIR Server R5 — FHIR REST API chuẩn HL7
+  hapi-fhir:
+    image: hapiproject/hapi:latest
+    container_name: hapi-fhir-server
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      hapi.fhir.fhir_version: R5
+      hapi.fhir.allow_multiple_delete: "true"
+      hapi.fhir.allow_external_references: "true"
+      hapi.fhir.reuse_cached_search_results_millis: "5000"
+    networks:
+      - default
+
   prometheus:
       image: prom/prometheus:latest
       container_name: fhir_prometheus

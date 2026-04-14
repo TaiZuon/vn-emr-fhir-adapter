@@ -39,3 +39,9 @@ validate-pydantic:
 
 validate-hl7:
 	cd fhir-adapter-service && python3 validate_fhir_batch.py --output validation_report.json
+
+# HAPI FHIR Server
+hapi-ui:
+	@echo "HAPI FHIR UI: http://localhost:8080"
+	@echo "FHIR API:     http://localhost:8080/fhir"
+	@echo "Metadata:     http://localhost:8080/fhir/metadata"
