@@ -1,233 +1,182 @@
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import date, datetime
-from decimal import Decimal
-from enum import Enum
-from constants import (
-    MAX_LENGTH_PRACTITIONER_CODE,
-    MAX_LENGTH_FULL_NAME,
-    MAX_LENGTH_SPECIALTY,
-    MAX_LENGTH_PHONE,
-    MAX_LENGTH_PATIENT_EXTERNAL_ID,
-    MAX_LENGTH_NATIONAL_ID,
-    MAX_LENGTH_INSURANCE_CARD_NO,
-    MAX_LENGTH_LOCATION,
-    MAX_LENGTH_CATEGORY,
-    MAX_LENGTH_CODE_DISPLAY,
-    MAX_LENGTH_CODE_SYSTEM,
-    MAX_LENGTH_VALUE_UNIT,
-    GENDER_MALE,
-    GENDER_FEMALE,
-    GENDER_OTHER,
-    ENCOUNTER_STATUS_PLANNED,
-    ENCOUNTER_STATUS_ARRIVED,
-    ENCOUNTER_STATUS_FINISHED,
-    DEFAULT_ENCOUNTER_STATUS,
-)
 
+class NhanVienYTeBase(BaseModel):
+    ma_bac_si: str = Field(..., max_length=20)
+    ho_ten: str = Field(..., max_length=100)
+    chuyen_khoa: Optional[str] = Field(None, max_length=100)
+    so_dien_thoai: Optional[str] = Field(None, max_length=20)
 
-# Enums
-class GenderEnum(str, Enum):
-    male = GENDER_MALE
-    female = GENDER_FEMALE
-    other = GENDER_OTHER
-
-
-class EncounterStatusEnum(str, Enum):
-    planned = ENCOUNTER_STATUS_PLANNED
-    arrived = ENCOUNTER_STATUS_ARRIVED
-    finished = ENCOUNTER_STATUS_FINISHED
-
-
-# Practitioner Schemas
-
-
-class PractitionerBase(BaseModel):
-    practitioner_code: str = Field(
-        ..., max_length=MAX_LENGTH_PRACTITIONER_CODE, description="Mã nhân viên y tế"
-    )
-    full_name: str = Field(..., max_length=MAX_LENGTH_FULL_NAME)
-    specialty: Optional[str] = Field(
-        None, max_length=MAX_LENGTH_SPECIALTY, description="Chuyên khoa"
-    )
-    phone: Optional[str] = Field(None, max_length=MAX_LENGTH_PHONE)
-
-
-class PractitionerCreate(PractitionerBase):
+class NhanVienYTeCreate(NhanVienYTeBase):
     pass
 
-
-class PractitionerUpdate(BaseModel):
-    practitioner_code: Optional[str] = Field(
-        None, max_length=MAX_LENGTH_PRACTITIONER_CODE
-    )
-    full_name: Optional[str] = Field(None, max_length=MAX_LENGTH_FULL_NAME)
-    specialty: Optional[str] = Field(None, max_length=MAX_LENGTH_SPECIALTY)
-    phone: Optional[str] = Field(None, max_length=MAX_LENGTH_PHONE)
-
-
-class PractitionerResponse(PractitionerBase):
+class NhanVienYTeSchema(NhanVienYTeBase):
     id: int
+    created_at: datetime
+    updated_at: datetime
+    is_deleted: bool
 
     class Config:
         from_attributes = True
 
+class BenhNhanBase(BaseModel):
+    ma_bn: str = Field(..., max_length=50)
+    ho_ten: str = Field(..., max_length=100)
+    ngay_sinh: date
+    gioi_tinh: int
+    dia_chi: Optional[str] = None
+    cccd: Optional[str] = Field(None, max_length=12)
+    can_nang: Optional[float] = None
+    ten_nguoi_dua_tre_den: Optional[str] = Field(None, max_length=100)
+    chu_ky_so: Optional[str] = None
 
-# Patient Schemas
-
-
-class PatientBase(BaseModel):
-    patient_external_id: str = Field(
-        ...,
-        max_length=MAX_LENGTH_PATIENT_EXTERNAL_ID,
-        description="Mã BN tại bệnh viện",
-    )
-    national_id: Optional[str] = Field(
-        None, max_length=MAX_LENGTH_NATIONAL_ID, description="Số CCCD"
-    )
-    full_name: str = Field(..., max_length=MAX_LENGTH_FULL_NAME)
-    gender: Optional[GenderEnum] = None
-    birth_date: date
-    address: Optional[str] = None
-    phone: Optional[str] = Field(None, max_length=MAX_LENGTH_PHONE)
-    insurance_card_no: Optional[str] = Field(
-        None, max_length=MAX_LENGTH_INSURANCE_CARD_NO, description="Mã số thẻ BHYT"
-    )
-
-
-class PatientCreate(PatientBase):
+class BenhNhanCreate(BenhNhanBase):
     pass
 
-
-class PatientUpdate(BaseModel):
-    patient_external_id: Optional[str] = Field(
-        None, max_length=MAX_LENGTH_PATIENT_EXTERNAL_ID
-    )
-    national_id: Optional[str] = Field(None, max_length=MAX_LENGTH_NATIONAL_ID)
-    full_name: Optional[str] = Field(None, max_length=MAX_LENGTH_FULL_NAME)
-    gender: Optional[GenderEnum] = None
-    birth_date: Optional[date] = None
-    address: Optional[str] = None
-    phone: Optional[str] = Field(None, max_length=MAX_LENGTH_PHONE)
-    insurance_card_no: Optional[str] = Field(
-        None, max_length=MAX_LENGTH_INSURANCE_CARD_NO
-    )
-
-
-class PatientResponse(PatientBase):
+class BenhNhanSchema(BenhNhanBase):
     id: int
+    created_at: datetime
+    updated_at: datetime
+    is_deleted: bool
 
     class Config:
         from_attributes = True
 
+class DotDieuTriBase(BaseModel):
+    ma_lk: str = Field(..., max_length=50)
+    benh_nhan_id: int
+    ma_bac_si: Optional[str] = Field(None, max_length=20)
+    ma_the: Optional[str] = Field(None, max_length=50)
+    ma_dkbd: Optional[str] = Field(None, max_length=20)
+    gt_the_tu: Optional[date] = None
+    gt_the_den: Optional[date] = None
+    mien_cung_ct: Optional[date] = None
+    ngay_vao: Optional[datetime] = None
+    ngay_ra: Optional[datetime] = None
+    ma_benh: Optional[str] = Field(None, max_length=20)
+    ma_benh_khac: Optional[str] = Field(None, max_length=200)
+    ten_benh: Optional[str] = None
+    ket_qua_dtri: Optional[int] = None
+    tinh_trang_rv: Optional[int] = None
+    t_tongchi: Optional[float] = None
+    t_bhtt: Optional[float] = None
+    t_bntt: Optional[float] = None
+    t_bncct: Optional[float] = None
+    chu_ky_so: Optional[str] = None
 
-# Observation Schemas
-
-
-class ObservationBase(BaseModel):
-    category: Optional[str] = Field(
-        None,
-        max_length=MAX_LENGTH_CATEGORY,
-        description="vital-signs, laboratory, etc.",
-    )
-    code_display: Optional[str] = Field(
-        None, max_length=MAX_LENGTH_CODE_DISPLAY, description="Tên chỉ số"
-    )
-    code_system: Optional[str] = Field(
-        None, max_length=MAX_LENGTH_CODE_SYSTEM, description="Mã chuẩn LOINC"
-    )
-    value_number: Optional[Decimal] = None
-    value_unit: Optional[str] = Field(
-        None, max_length=MAX_LENGTH_VALUE_UNIT, description="mmHg, kg, Celsius"
-    )
-
-
-class ObservationCreate(ObservationBase):
-    encounter_id: int
-
-
-class ObservationUpdate(BaseModel):
-    category: Optional[str] = Field(None, max_length=MAX_LENGTH_CATEGORY)
-    code_display: Optional[str] = Field(None, max_length=MAX_LENGTH_CODE_DISPLAY)
-    code_system: Optional[str] = Field(None, max_length=MAX_LENGTH_CODE_SYSTEM)
-    value_number: Optional[Decimal] = None
-    value_unit: Optional[str] = Field(None, max_length=MAX_LENGTH_VALUE_UNIT)
-
-
-class ObservationResponse(ObservationBase):
-    id: int
-    encounter_id: int
-    issued_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
-
-
-# Encounter Schemas
-
-
-class EncounterBase(BaseModel):
-    patient_id: int
-    practitioner_id: Optional[int] = None
-    status: Optional[EncounterStatusEnum] = EncounterStatusEnum(
-        DEFAULT_ENCOUNTER_STATUS
-    )
-    reason_code: Optional[str] = Field(None, description="Lý do khám/Mã ICD-10 sơ bộ")
-    location: Optional[str] = Field(
-        None, max_length=MAX_LENGTH_LOCATION, description="Phòng khám/Khoa"
-    )
-
-
-class EncounterCreate(EncounterBase):
+class DotDieuTriCreate(DotDieuTriBase):
     pass
 
+class DotDieuTriSchema(DotDieuTriBase):
+    created_at: datetime
+    updated_at: datetime
+    is_deleted: bool
 
-class EncounterUpdate(BaseModel):
-    patient_id: Optional[int] = None
-    practitioner_id: Optional[int] = None
-    status: Optional[EncounterStatusEnum] = None
-    reason_code: Optional[str] = None
-    location: Optional[str] = Field(None, max_length=MAX_LENGTH_LOCATION)
+    class Config:
+        from_attributes = True
 
+class ChiTietThuocBase(BaseModel):
+    dot_dieu_tri_id: str = Field(..., max_length=50)
+    ma_don_thuoc: Optional[str] = Field(None, max_length=20)
+    stt: Optional[int] = None
+    ma_thuoc: Optional[str] = Field(None, max_length=50)
+    ten_thuoc: Optional[str] = Field(None, max_length=200)
+    don_vi_tinh: Optional[str] = Field(None, max_length=20)
+    ham_luong: Optional[str] = Field(None, max_length=50)
+    duong_dung: Optional[str] = Field(None, max_length=50)
+    lieu_dung: Optional[str] = Field(None, max_length=100)
+    so_luong: Optional[float] = None
+    don_gia: Optional[float] = None
+    thanh_tien: Optional[float] = None
+    ma_bac_si: Optional[str] = Field(None, max_length=20)
+    ngay_yl: Optional[datetime] = None
+    chu_ky_so: Optional[str] = None
 
-class EncounterResponse(EncounterBase):
+class ChiTietThuocCreate(ChiTietThuocBase):
+    pass
+
+class ChiTietThuocSchema(ChiTietThuocBase):
     id: int
-    start_timestamp: Optional[datetime] = None
+    created_at: datetime
+    updated_at: datetime
+    is_deleted: bool
 
     class Config:
         from_attributes = True
 
+class DichVuKyThuatBase(BaseModel):
+    dot_dieu_tri_id: str = Field(..., max_length=50)
+    stt: Optional[int] = None
+    ma_dich_vu: Optional[str] = Field(None, max_length=50)
+    ten_dich_vu: Optional[str] = Field(None, max_length=200)
+    ma_vat_tu: Optional[str] = Field(None, max_length=50)
+    ten_vat_tu: Optional[str] = Field(None, max_length=200)
+    so_luong: Optional[float] = None
+    don_gia: Optional[float] = None
+    thanh_tien: Optional[float] = None
+    ma_khoa: Optional[str] = Field(None, max_length=50)
+    ma_giuong: Optional[str] = Field(None, max_length=50)
+    ma_bac_si: Optional[str] = Field(None, max_length=20)
+    ngay_yl: Optional[datetime] = None
+    ngay_kq: Optional[datetime] = None
+    chu_ky_so: Optional[str] = None
 
-class EncounterWithRelations(EncounterResponse):
-    """Encounter với thông tin Patient, Practitioner và Observations"""
+class DichVuKyThuatCreate(DichVuKyThuatBase):
+    pass
 
-    patient: Optional[PatientResponse] = None
-    practitioner: Optional[PractitionerResponse] = None
-    observations: List[ObservationResponse] = []
+class DichVuKyThuatSchema(DichVuKyThuatBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    is_deleted: bool
+
+    class Config:
+        from_attributes = True
+
+class CanLamSangBase(BaseModel):
+    dot_dieu_tri_id: str = Field(..., max_length=50)
+    stt: Optional[int] = None
+    ma_dich_vu: Optional[str] = Field(None, max_length=50)
+    ma_chi_so: Optional[str] = Field(None, max_length=50)
+    ten_chi_so: Optional[str] = Field(None, max_length=200)
+    gia_tri: Optional[str] = Field(None, max_length=100)
+    ma_may: Optional[str] = Field(None, max_length=50)
+    mo_ta: Optional[str] = None
+    ket_luan: Optional[str] = None
+    ngay_kq: Optional[datetime] = None
+    chu_ky_so: Optional[str] = None
+
+class CanLamSangCreate(CanLamSangBase):
+    pass
+
+class CanLamSangSchema(CanLamSangBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    is_deleted: bool
 
     class Config:
         from_attributes = True
 
+class DienBienLamSangBase(BaseModel):
+    dot_dieu_tri_id: str = Field(..., max_length=50)
+    stt: Optional[int] = None
+    dien_bien: Optional[str] = None
+    hoi_chan: Optional[str] = None
+    phau_thuat: Optional[str] = None
+    ngay_yl: Optional[datetime] = None
+    chu_ky_so: Optional[str] = None
 
-# Patient với Encounters
+class DienBienLamSangCreate(DienBienLamSangBase):
+    pass
 
-
-class PatientWithEncounters(PatientResponse):
-    """Patient với danh sách các lượt khám"""
-
-    encounters: List[EncounterResponse] = []
-
-    class Config:
-        from_attributes = True
-
-
-# Practitioner với Encounters
-
-
-class PractitionerWithEncounters(PractitionerResponse):
-    """Practitioner với danh sách các lượt khám"""
-
-    encounters: List[EncounterResponse] = []
+class DienBienLamSangSchema(DienBienLamSangBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    is_deleted: bool
 
     class Config:
         from_attributes = True
+

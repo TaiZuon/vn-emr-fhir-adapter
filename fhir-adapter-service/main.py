@@ -59,7 +59,9 @@ def process_batch(channel, batch, delivery_tags):
             mongo_id = fhir_store.save_resource(fhir_resource)
 
             if mongo_id:
-                ref_manager.add_mapping(res_type, data['id'], mongo_id)
+                # Lấy EMR key: ưu tiên ma_lk (dot_dieu_tri), rồi id (các bảng khác)
+                emr_key = data.get('ma_lk', data.get('id'))
+                ref_manager.add_mapping(res_type, emr_key, mongo_id)
                 log.info(f"Đã lưu {res_type} vào MongoDB với ID: {mongo_id}")
                 
         # Tất cả resource trong batch đã được process thành công, ta tiến hành ACK

@@ -15,15 +15,15 @@ class DataPreHandler:
         self.last_flush_time = time.time()
         
         # FHIR Resource Creation Priority (Lower number = Created first)
-        # e.g. Organizations and Patients must exist before Encounters and Observations
+        # e.g. Patients/Practitioners must exist before Encounters, which must exist before detail tables
         self.priority_map = {
-            'organizations': 1,
-            'patients': 2,
-            'practitioners': 3,
-            'encounters': 4,
-            'observations': 5,
-            'immunizations': 6,
-            'conditions': 7
+            'benh_nhan': 1,
+            'nhan_vien_y_te': 2,
+            'dot_dieu_tri': 3,
+            'chi_tiet_thuoc': 4,
+            'dich_vu_ky_thuat': 5,
+            'can_lam_sang': 6,
+            'dien_bien_lam_sang': 7
         }
 
     def add_event(self, event: Dict[str, Any], delivery_tag: int) -> Tuple[List[Dict[str, Any]], List[int]]:
@@ -86,9 +86,8 @@ class DataPreHandler:
                 continue
                 
             # Define merge key strategy. 
-            # In a real scenario, this depends on table structures (e.g. merging all labs for a specific encounter_id)
-            # Here we default to merging by the target entity ID (like patient_id or encounter_id)
-            merge_identifier = data.get("patient_id", data.get("encounter_id", data.get("id")))
+            # Merge by the target entity ID: benh_nhan_id for patient-level, dot_dieu_tri_id for encounter-level details
+            merge_identifier = data.get("benh_nhan_id", data.get("dot_dieu_tri_id", data.get("ma_lk", data.get("id"))))
             merge_key = f"{table}_{merge_identifier}"
             
             if merge_key not in merged_events:
@@ -113,9 +112,9 @@ if __name__ == "__main__":
     pre_handler = DataPreHandler(batch_size=5)
     
     mock_events = [
-        ({"source": {"table": "observations"}, "after": {"id": 101, "patient_id": "P1", "test": "Blood Sugar"}}, 1),
-        ({"source": {"table": "patients"}, "after": {"id": "P1", "name": "John Doe"}}, 2),  # Should go first despite appending second
-        ({"source": {"table": "observations"}, "after": {"id": 102, "patient_id": "P1", "test": "Heart Rate"}}, 3)
+        ({"source": {"table": "can_lam_sang"}, "after": {"id": 101, "dot_dieu_tri_id": "DT001", "ten_chi_so": "Đường huyết"}}, 1),
+        ({"source": {"table": "benh_nhan"}, "after": {"id": "P1", "ho_ten": "Nguyễn Văn A"}}, 2),  # Should go first despite appending second
+        ({"source": {"table": "can_lam_sang"}, "after": {"id": 102, "dot_dieu_tri_id": "DT001", "ten_chi_so": "Nhịp tim"}}, 3)
     ]
     
     for evt, tag in mock_events:

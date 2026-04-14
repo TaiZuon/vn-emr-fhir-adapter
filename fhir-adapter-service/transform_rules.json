@@ -1,55 +1,117 @@
 {
-  "patients": {
+  "benh_nhan": {
     "resource_type": "Patient",
     "rules": [
       { "source": "id", "target": "id", "action": "direct" },
-      { "source": "patient_external_id", "target": "identifier[0].value", "action": "direct" },
-      { "source": "full_name", "target": "name[0].text", "action": "direct" },
+      { "source": "ma_bn", "target": "identifier[0].value", "action": "direct" },
+      { "source": "cccd", "target": "identifier[1].value", "action": "direct" },
+      { "source": "ho_ten", "target": "name[0].text", "action": "direct" },
       { 
-        "source": "gender", 
+        "source": "gioi_tinh", 
         "target": "gender", 
         "action": "lookup", 
-        "map": { "Nam": "male", "Nữ": "female", "Khác": "other" } 
+        "map": { "1": "male", "2": "female", "3": "other" } 
       },
-      { "source": "birth_date", "target": "birthDate", "action": "date" }
+      { "source": "ngay_sinh", "target": "birthDate", "action": "date" },
+      { "source": "dia_chi", "target": "address[0].text", "action": "direct" },
+      { "source": "can_nang", "target": "extension[0].valueDecimal", "action": "float" }
     ]
   },
-  "observations": {
-    "resource_type": "Observation",
-    "rules": [
-      { "source": "id", "target": "id", "action": "direct" },
-      { "source": "code_system", "target": "code.coding[0].code", "action": "direct" },
-      { "source": "code_display", "target": "code.coding[0].display", "action": "direct" },
-      { "source": "value_number", "target": "valueQuantity.value", "action": "float" },
-      { "source": "value_unit", "target": "valueQuantity.unit", "action": "direct" },
-      { "source": "encounter_id", "target": "encounter.reference", "action": "reference", "ref_type": "Encounter" }
-    ]
-  },
-  "practitioners": {
+  "nhan_vien_y_te": {
     "resource_type": "Practitioner",
     "rules": [
       { "source": "id", "target": "id", "action": "direct" },
-      { "source": "practitioner_code", "target": "identifier[0].value", "action": "direct" },
-      { "source": "full_name", "target": "name[0].text", "action": "direct" },
-      { "source": "specialty", "target": "qualification[0].code.text", "action": "direct" },
-      { "source": "phone", "target": "telecom[0].value", "action": "direct" }
+      { "source": "ma_bac_si", "target": "identifier[0].value", "action": "direct" },
+      { "source": "ho_ten", "target": "name[0].text", "action": "direct" },
+      { "source": "chuyen_khoa", "target": "qualification[0].code.text", "action": "direct" },
+      { "source": "so_dien_thoai", "target": "telecom[0].value", "action": "direct" }
     ]
   },
-  "encounters": {
+  "dot_dieu_tri": {
     "resource_type": "Encounter",
     "rules": [
-      { "source": "id", "target": "id", "action": "direct" },
+      { "source": "ma_lk", "target": "id", "action": "direct" },
+      { "source": "ma_lk", "target": "identifier[0].value", "action": "direct" },
+      { "source": "ma_the", "target": "extension[0].valueString", "action": "direct" },
+      { "source": "ngay_vao", "target": "actualPeriod.start", "action": "date" },
+      { "source": "ngay_ra", "target": "actualPeriod.end", "action": "date" },
+      { "source": "ma_benh", "target": "diagnosis[0].condition[0].concept.coding[0].code", "action": "direct" },
+      { "source": "ten_benh", "target": "diagnosis[0].condition[0].concept.coding[0].display", "action": "direct" },
+      { "source": "ma_benh_khac", "target": "diagnosis[1].condition[0].concept.text", "action": "direct" },
       { 
-        "source": "status", 
+        "source": "ket_qua_dtri", 
         "target": "status", 
         "action": "lookup", 
-        "map": { "COMPLETED": "completed", "IN_PROGRESS": "in-progress", "PLANNED": "planned", "ARRIVED": "arrived", "CANCELLED": "cancelled" } 
+        "map": { "1": "completed", "2": "in-progress", "3": "cancelled" } 
       },
-      { "source": "start_timestamp", "target": "actualPeriod.start", "action": "date" },
-      { "source": "reason_code", "target": "type[0].text", "action": "direct" },
-      { "source": "location", "target": "location[0].location.display", "action": "direct" },
-      { "source": "patient_id", "target": "subject.reference", "action": "reference", "ref_type": "Patient" },
-      { "source": "practitioner_id", "target": "participant[0].actor.reference", "action": "reference", "ref_type": "Practitioner" }
+      { "source": "benh_nhan_id", "target": "subject.reference", "action": "reference", "ref_type": "Patient" },
+      { "source": "ma_bac_si", "target": "participant[0].actor.reference", "action": "reference", "ref_type": "Practitioner" }
+    ]
+  },
+  "chi_tiet_thuoc": {
+    "resource_type": "MedicationRequest",
+    "rules": [
+      { "source": "id", "target": "id", "action": "direct" },
+      { "source": "ma_don_thuoc", "target": "identifier[0].value", "action": "direct" },
+      { "source": "ma_thuoc", "target": "medication.concept.coding[0].code", "action": "direct" },
+      { "source": "ten_thuoc", "target": "medication.concept.coding[0].display", "action": "direct" },
+      { "source": "don_vi_tinh", "target": "dispenseRequest.quantity.unit", "action": "direct" },
+      { "source": "ham_luong", "target": "medication.concept.text", "action": "direct" },
+      { "source": "duong_dung", "target": "dosageInstruction[0].route.text", "action": "direct" },
+      { "source": "lieu_dung", "target": "dosageInstruction[0].text", "action": "direct" },
+      { "source": "so_luong", "target": "dispenseRequest.quantity.value", "action": "float" },
+      { "source": "don_gia", "target": "extension[0].valueDecimal", "action": "float" },
+      { "source": "thanh_tien", "target": "extension[1].valueDecimal", "action": "float" },
+      { "source": "ngay_yl", "target": "authoredOn", "action": "date" },
+      { "source": "dot_dieu_tri_id", "target": "encounter.reference", "action": "reference", "ref_type": "Encounter" },
+      { "source": "ma_bac_si", "target": "requester.reference", "action": "reference", "ref_type": "Practitioner" },
+      { "source": "dot_dieu_tri_id", "target": "subject.reference", "action": "reference", "ref_type": "Encounter" }
+    ]
+  },
+  "dich_vu_ky_thuat": {
+    "resource_type": "Procedure",
+    "rules": [
+      { "source": "id", "target": "id", "action": "direct" },
+      { "source": "ma_dich_vu", "target": "code.coding[0].code", "action": "direct" },
+      { "source": "ten_dich_vu", "target": "code.coding[0].display", "action": "direct" },
+      { "source": "ma_vat_tu", "target": "usedCode[0].coding[0].code", "action": "direct" },
+      { "source": "ten_vat_tu", "target": "usedCode[0].coding[0].display", "action": "direct" },
+      { "source": "so_luong", "target": "extension[0].valueDecimal", "action": "float" },
+      { "source": "don_gia", "target": "extension[1].valueDecimal", "action": "float" },
+      { "source": "thanh_tien", "target": "extension[2].valueDecimal", "action": "float" },
+      { "source": "ma_khoa", "target": "location.reference", "action": "direct" },
+      { "source": "ngay_yl", "target": "occurrencePeriod.start", "action": "date" },
+      { "source": "ngay_kq", "target": "occurrencePeriod.end", "action": "date" },
+      { "source": "dot_dieu_tri_id", "target": "encounter.reference", "action": "reference", "ref_type": "Encounter" },
+      { "source": "ma_bac_si", "target": "performer[0].actor.reference", "action": "reference", "ref_type": "Practitioner" },
+      { "source": "dot_dieu_tri_id", "target": "subject.reference", "action": "reference", "ref_type": "Encounter" }
+    ]
+  },
+  "can_lam_sang": {
+    "resource_type": "Observation",
+    "rules": [
+      { "source": "id", "target": "id", "action": "direct" },
+      { "source": "ma_dich_vu", "target": "category[0].coding[0].code", "action": "direct" },
+      { "source": "ma_chi_so", "target": "code.coding[0].code", "action": "direct" },
+      { "source": "ten_chi_so", "target": "code.coding[0].display", "action": "direct" },
+      { "source": "gia_tri", "target": "valueString", "action": "direct" },
+      { "source": "ma_may", "target": "device.display", "action": "direct" },
+      { "source": "mo_ta", "target": "note[0].text", "action": "direct" },
+      { "source": "ket_luan", "target": "interpretation[0].text", "action": "direct" },
+      { "source": "ngay_kq", "target": "effectiveDateTime", "action": "date" },
+      { "source": "dot_dieu_tri_id", "target": "encounter.reference", "action": "reference", "ref_type": "Encounter" }
+    ]
+  },
+  "dien_bien_lam_sang": {
+    "resource_type": "ClinicalImpression",
+    "rules": [
+      { "source": "id", "target": "id", "action": "direct" },
+      { "source": "dien_bien", "target": "summary", "action": "direct" },
+      { "source": "hoi_chan", "target": "note[0].text", "action": "direct" },
+      { "source": "phau_thuat", "target": "finding[0].item.concept.text", "action": "direct" },
+      { "source": "ngay_yl", "target": "date", "action": "date" },
+      { "source": "dot_dieu_tri_id", "target": "encounter.reference", "action": "reference", "ref_type": "Encounter" },
+      { "source": "dot_dieu_tri_id", "target": "subject.reference", "action": "reference", "ref_type": "Encounter" }
     ]
   }
 }

@@ -1,463 +1,256 @@
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+from typing import List
+import uuid
+import random
+from datetime import timedelta
+import string
+
+from database import Base, engine, get_db
 import models
 import schemas
-import database
-# import publisher
-from faker import Faker
-import random
-import time
-import uuid
-from constants import API_TITLE
+from constants import *
+
+# Initialize database
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title=API_TITLE)
 
-fake = Faker(["vi_VN"])
+# Benh Nhan Endpoints
+@app.get(ENDPOINT_BENH_NHAN, response_model=List[schemas.BenhNhanSchema])
+def read_benh_nhans(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    benh_nhans = db.query(models.BenhNhan).filter(models.BenhNhan.is_deleted == False).offset(skip).limit(limit).all()
+    return benh_nhans
 
-
-@app.post("/patients/", response_model=schemas.PatientResponse)
-def create_patient(
-    patient: schemas.PatientCreate, db: Session = Depends(database.get_db)
-):
-    # Lưu vào SQL
-    db_patient = models.Patient(**patient.dict())
-    db.add(db_patient)
+@app.post(ENDPOINT_BENH_NHAN, response_model=schemas.BenhNhanSchema)
+def create_benh_nhan(benh_nhan: schemas.BenhNhanCreate, db: Session = Depends(get_db)):
+    db_benh_nhan = models.BenhNhan(**benh_nhan.dict())
+    db.add(db_benh_nhan)
     db.commit()
-    db.refresh(db_patient)
+    db.refresh(db_benh_nhan)
+    return db_benh_nhan
 
-    # Chụp ảnh dữ liệu (Snapshot) cho Fat Message
-    # Lấy tự động tất cả các cột trong bảng patients
-    snapshot = {c.name: getattr(db_patient, c.name) for c in db_patient.__table__.columns}
-    
-    # Ép kiểu datetime sang chuỗi ISO 8601 để thư viện JSON có thể đọc được
-    if snapshot.get('birth_date'):
-        snapshot['birth_date'] = snapshot['birth_date'].isoformat()
-    if snapshot.get('created_at'):
-        snapshot['created_at'] = snapshot['created_at'].isoformat()
-    if snapshot.get('updated_at'):
-        snapshot['updated_at'] = snapshot['updated_at'].isoformat()
+# Nhan Vien Y Te Endpoints
+@app.get(ENDPOINT_NHAN_VIEN_Y_TE, response_model=List[schemas.NhanVienYTeSchema])
+def read_nhan_vien_y_tes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    nhan_viens = db.query(models.NhanVienYTe).filter(models.NhanVienYTe.is_deleted == False).offset(skip).limit(limit).all()
+    return nhan_viens
 
-    # Bắn sự kiện sang RabbitMQ theo chuẩn Debezium
-    # op='c' nghĩa là Create, table_name='patients' để báo cho Adapter biết dùng Rule nào
-    # publisher.publish_event(
-    #     operation='c', 
-    #     table_name='patients', 
-    #     data_snapshot=snapshot
-    # )
+@app.post(ENDPOINT_NHAN_VIEN_Y_TE, response_model=schemas.NhanVienYTeSchema)
+def create_nhan_vien_y_te(nhan_vien: schemas.NhanVienYTeCreate, db: Session = Depends(get_db)):
+    db_nhan_vien = models.NhanVienYTe(**nhan_vien.dict())
+    db.add(db_nhan_vien)
+    db.commit()
+    db.refresh(db_nhan_vien)
+    return db_nhan_vien
 
-    return db_patient
+# Dot Dieu Tri Endpoints
+@app.get(ENDPOINT_DOT_DIEU_TRI, response_model=List[schemas.DotDieuTriSchema])
+def read_dot_dieu_tris(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    dot_dieu_tris = db.query(models.DotDieuTri).filter(models.DotDieuTri.is_deleted == False).offset(skip).limit(limit).all()
+    return dot_dieu_tris
 
-@app.post("/test/seed-patient/{count}", tags=["Testing"])
-def seed_patients(count: int, db: Session = Depends(database.get_db)):
-    """
-    Tự động tạo ra 'count' bệnh nhân ngẫu nhiên, không trùng lặp và bắn qua RabbitMQ.
-    """
-    created_names = []
-    created_count = 0
-    attempts = 0
-    max_attempts = count * 3 # Tăng lên một chút để thoải mái thử lại nếu trùng
+@app.post(ENDPOINT_DOT_DIEU_TRI, response_model=schemas.DotDieuTriSchema)
+def create_dot_dieu_tri(dot_dieu_tri: schemas.DotDieuTriCreate, db: Session = Depends(get_db)):
+    db_dot_dieu_tri = models.DotDieuTri(**dot_dieu_tri.dict())
+    db.add(db_dot_dieu_tri)
+    db.commit()
+    db.refresh(db_dot_dieu_tri)
+    return db_dot_dieu_tri
 
-    while created_count < count and attempts < max_attempts:
-        attempts += 1
-        
-        # 1. Tạo ID kết hợp Timestamp + UUID để đảm bảo không trùng với quá khứ
-        # Lấy 6 số cuối của timestamp (miliseconds)
-        ts = str(int(time.time() * 1000))[-6:] 
-        suffix = uuid.uuid4().hex[:4].upper()
-        ext_id = f"BN-2026-{ts}-{suffix}"
+# Chi Tiet Thuoc Endpoints
+@app.get(ENDPOINT_CHI_TIET_THUOC, response_model=List[schemas.ChiTietThuocSchema])
+def read_chi_tiet_thuocs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    chi_tiet_thuocs = db.query(models.ChiTietThuoc).filter(models.ChiTietThuoc.is_deleted == False).offset(skip).limit(limit).all()
+    return chi_tiet_thuocs
 
-        # 2. Tạo CCCD ngẫu nhiên 12 số
-        nat_id = fake.numerify(text='0###########')
-        
-        # Kiểm tra nhanh trong DB để tránh query lỗi Integrity sau này
-        exists = db.query(models.Patient).filter(
-            (models.Patient.patient_external_id == ext_id) | 
-            (models.Patient.national_id == nat_id)
-        ).first()
+@app.post(ENDPOINT_CHI_TIET_THUOC, response_model=schemas.ChiTietThuocSchema)
+def create_chi_tiet_thuoc(chi_tiet_thuoc: schemas.ChiTietThuocCreate, db: Session = Depends(get_db)):
+    db_chi_tiet_thuoc = models.ChiTietThuoc(**chi_tiet_thuoc.dict())
+    if db_chi_tiet_thuoc.don_gia and db_chi_tiet_thuoc.so_luong:
+        db_chi_tiet_thuoc.thanh_tien = float(db_chi_tiet_thuoc.don_gia) * float(db_chi_tiet_thuoc.so_luong)
+    db.add(db_chi_tiet_thuoc)
+    db.commit()
+    db.refresh(db_chi_tiet_thuoc)
+    return db_chi_tiet_thuoc
 
-        if exists:
-            continue # Trùng thì bỏ qua vòng này, tìm bộ mới
+# Dich Vu Ky Thuat Endpoints
+@app.get(ENDPOINT_DICH_VU_KY_THUAT, response_model=List[schemas.DichVuKyThuatSchema])
+def read_dich_vu_ky_thuats(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    dich_vu_ky_thuats = db.query(models.DichVuKyThuat).filter(models.DichVuKyThuat.is_deleted == False).offset(skip).limit(limit).all()
+    return dich_vu_ky_thuats
 
-        try:
-            # Lưu vào Postgres
-            new_patient = models.Patient(
-                patient_external_id=ext_id,
-                national_id=nat_id,
-                full_name=fake.name(),
-                gender=random.choice(["Nam", "Nữ", "Khác"]),
-                birth_date=fake.date_of_birth(minimum_age=1, maximum_age=90),
-                address=fake.address().replace('\n', ', '),
-                phone=fake.unique.numerify(text='09########'), # Dùng .unique của faker cho phone
-                insurance_card_no=f"GD{fake.numerify(text='#############')}"
+@app.post(ENDPOINT_DICH_VU_KY_THUAT, response_model=schemas.DichVuKyThuatSchema)
+def create_dich_vu_ky_thuat(dich_vu_ky_thuat: schemas.DichVuKyThuatCreate, db: Session = Depends(get_db)):
+    db_dich_vu = models.DichVuKyThuat(**dich_vu_ky_thuat.dict())
+    if db_dich_vu.don_gia and db_dich_vu.so_luong:
+        db_dich_vu.thanh_tien = float(db_dich_vu.don_gia) * float(db_dich_vu.so_luong)
+    db.add(db_dich_vu)
+    db.commit()
+    db.refresh(db_dich_vu)
+    return db_dich_vu
+
+# Can Lam Sang Endpoints
+@app.get(ENDPOINT_CAN_LAM_SANG, response_model=List[schemas.CanLamSangSchema])
+def read_can_lam_sangs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    can_lam_sangs = db.query(models.CanLamSang).filter(models.CanLamSang.is_deleted == False).offset(skip).limit(limit).all()
+    return can_lam_sangs
+
+@app.post(ENDPOINT_CAN_LAM_SANG, response_model=schemas.CanLamSangSchema)
+def create_can_lam_sang(can_lam_sang: schemas.CanLamSangCreate, db: Session = Depends(get_db)):
+    db_can_lam_sang = models.CanLamSang(**can_lam_sang.dict())
+    db.add(db_can_lam_sang)
+    db.commit()
+    db.refresh(db_can_lam_sang)
+    return db_can_lam_sang
+
+# Dien Bien Lam Sang Endpoints
+@app.get(ENDPOINT_DIEN_BIEN_LAM_SANG, response_model=List[schemas.DienBienLamSangSchema])
+def read_dien_bien_lam_sangs(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    dien_biens = db.query(models.DienBienLamSang).filter(models.DienBienLamSang.is_deleted == False).offset(skip).limit(limit).all()
+    return dien_biens
+
+@app.post(ENDPOINT_DIEN_BIEN_LAM_SANG, response_model=schemas.DienBienLamSangSchema)
+def create_dien_bien_lam_sang(dien_bien: schemas.DienBienLamSangCreate, db: Session = Depends(get_db)):
+    db_dien_bien = models.DienBienLamSang(**dien_bien.dict())
+    db.add(db_dien_bien)
+    db.commit()
+    db.refresh(db_dien_bien)
+    return db_dien_bien
+
+# Seed Fake Database logic
+@app.post("/test/seed-complex-workflow/{count}")
+def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
+    from faker import Faker
+    fake = Faker('vi_VN')
+    num_practitioners = max(count // 10, 1)
+
+    # 1. Nhan_Vien_Y_Te
+    doctors = []
+    for i in range(num_practitioners):
+        doc = models.NhanVienYTe(
+            ma_bac_si=f"BS{str(i).zfill(4)}{random.randint(100,999)}",
+            ho_ten=fake.name(),
+            chuyen_khoa=random.choice(["Nội khoa", "Ngoại khoa", "Nhi khoa", "Sản khoa", "Mắt", "Tai mũi họng"]),
+            so_dien_thoai=fake.phone_number()[:10]
+        )
+        db.add(doc)
+        doctors.append(doc)
+    db.commit()
+
+    created_patients = 0
+    # Bệnh nhân
+    for i in range(count):
+        patient = models.BenhNhan(
+            ma_bn=f"BN{str(uuid.uuid4())[:8].upper()}",
+            ho_ten=fake.name(),
+            ngay_sinh=fake.date_of_birth(minimum_age=1, maximum_age=90),
+            gioi_tinh=random.choice([1, 2, 3]),
+            dia_chi=fake.address(),
+            cccd=f"0{random.randint(10000000000, 99999999999)}",
+            can_nang=round(random.uniform(3.0, 90.0), 1),
+            ten_nguoi_dua_tre_den=fake.name() if random.random() < 0.2 else None
+        )
+        db.add(patient)
+        db.commit()
+        db.refresh(patient)
+        created_patients += 1
+
+        # Đợt điều trị cho mỗi BN
+        num_encounters = random.randint(1, 3)
+        for _ in range(num_encounters):
+            dr = random.choice(doctors)
+            ngay_vao = fake.date_time_between(start_date='-1y', end_date='now')
+            ngay_ra = ngay_vao + timedelta(days=random.randint(1, 30))
+            encounter = models.DotDieuTri(
+                ma_lk=f"LK{str(uuid.uuid4()).replace('-', '').upper()[:20]}",
+                benh_nhan_id=patient.id,
+                ma_bac_si=dr.ma_bac_si,
+                ngay_vao=ngay_vao,
+                ngay_ra=ngay_ra,
+                ma_the=f"GD479{random.randint(1000000000, 9999999999)}",
+                ma_dkbd="01001",
+                ten_benh=random.choice(["Sốt xuất huyết", "Viêm phổi", "Viêm phế quản", "Đau ruột thừa"]),
+                tinh_trang_rv=random.choice([1, 2, 3, 4])
             )
-            
-            db.add(new_patient)
+            db.add(encounter)
             db.commit()
-            db.refresh(new_patient) # Để lấy lại ID tự tăng nếu có
+            db.refresh(encounter)
 
-            # 3. Bắn sang RabbitMQ
-            # Lấy data_snapshot từ đối tượng vừa lưu (new_patient)
-            snapshot = {c.name: getattr(new_patient, c.name) for c in new_patient.__table__.columns}
-            
-            # Convert date sang string cho JSON chuẩn
-            if snapshot.get('birth_date'):
-                snapshot['birth_date'] = snapshot['birth_date'].isoformat()
-            
-            # # Sử dụng publisher để bắn event
-            # publisher.publish_event(
-            #     operation='c', 
-            #     table_name='patients', 
-            #     data_snapshot=snapshot
-            # )
-            
-            # 4. Ghi nhận thành công
-            created_names.append(new_patient.full_name)
-            created_count += 1
-
-        except IntegrityError:
-            db.rollback() # Trả lại transaction nếu trùng ở mức DB
-            continue
-        except Exception as e:
-            db.rollback()
-            print(f" [❌] Lỗi không xác định: {e}")
-            continue
-
-    return {
-        "status": "success",
-        "requested": count,
-        "created": created_count,
-        "total_attempts": attempts,
-        "names": created_names
-    }
-
-@app.post("/test/seed-practitioner/{count}", tags=["Testing"])
-def seed_practitioners(count: int, db: Session = Depends(database.get_db)):
-    """
-    Tự động tạo ra 'count' nhân viên y tế ngẫu nhiên
-    """
-    created_names = []
-    created_count = 0
-    attempts = 0
-
-    while created_count < count and attempts < count * 3:
-        attempts += 1
-        ts = str(int(time.time() * 1000))[-6:]
-        suffix = uuid.uuid4().hex[:4].upper()
-        prac_code = f"BS-2026-{ts}-{suffix}"
-        
-        exists = db.query(models.Practitioner).filter(models.Practitioner.practitioner_code == prac_code).first()
-        if exists: continue
-
-        try:
-            new_prac = models.Practitioner(
-                practitioner_code=prac_code,
-                full_name=fake.name(),
-                specialty=random.choice(["Nội khoa", "Ngoại khoa", "Nhi khoa", "Sản phụ khoa", "Mắt", "Tai Mũi Họng", "Răng Hàm Mặt"]),
-                phone=fake.unique.numerify(text='09########')
-            )
-            db.add(new_prac)
-            db.commit()
-            db.refresh(new_prac)
-            created_names.append(new_prac.full_name)
-            created_count += 1
-        except IntegrityError:
-            db.rollback()
-            continue
-        except Exception as e:
-            db.rollback()
-            print(f" [❌] Lỗi: {e}")
-            continue
-
-    return {
-        "status": "success",
-        "requested": count,
-        "created": created_count,
-        "names": created_names
-    }
-
-@app.post("/test/seed-encounter/{count}", tags=["Testing"])
-def seed_encounters(count: int, db: Session = Depends(database.get_db)):
-    """
-    Tự động tạo ra 'count' lượt khám (Encounter) ngẫu nhiên map giữa Patient và Practitioner có sẵn trong DB
-    """
-    patient_ids = [p.id for p in db.query(models.Patient.id).all()]
-    practitioner_ids = [p.id for p in db.query(models.Practitioner.id).all()]
-    
-    if not patient_ids or not practitioner_ids:
-        raise HTTPException(status_code=400, detail="Không có đủ dữ liệu Patient và Practitioner để tạo Encounter")
-
-    created_ids = []
-    created_count = 0
-
-    for _ in range(count):
-        try:
-            new_enc = models.Encounter(
-                patient_id=random.choice(patient_ids),
-                practitioner_id=random.choice(practitioner_ids),
-                status=random.choice(["COMPLETED", "IN_PROGRESS", "PLANNED", "ARRIVED", "CANCELLED"]),
-                reason_code=random.choice(["J00", "I10", "E11", "K21"]),
-                location=random.choice(["Phòng khám nội 1", "Phòng khám ngoại 2", "Khoa cấp cứu", "Phòng tiểu phẫu"])
-            )
-            db.add(new_enc)
-            db.commit()
-            db.refresh(new_enc)
-            created_ids.append(new_enc.id)
-            created_count += 1
-        except Exception as e:
-            db.rollback()
-            print(f" [❌] Lỗi Encounter: {e}")
-            continue
-
-    return {
-        "status": "success",
-        "requested": count,
-        "created": created_count,
-        "encounter_ids": created_ids
-    }
-from typing import List
-
-# --- PATIENT CRUD ---
-@app.get("/patients/{patient_id}", response_model=schemas.PatientResponse)
-def get_patient(patient_id: int, db: Session = Depends(database.get_db)):
-    patient = db.query(models.Patient).filter(models.Patient.id == patient_id, models.Patient.is_deleted == False).first()
-    if not patient: raise HTTPException(status_code=404, detail="Patient not found")
-    return patient
-
-@app.get("/patients/", response_model=List[schemas.PatientResponse])
-def list_patients(skip: int = 0, limit: int = 100, db: Session = Depends(database.get_db)):
-    return db.query(models.Patient).filter(models.Patient.is_deleted == False).offset(skip).limit(limit).all()
-
-@app.put("/patients/{patient_id}", response_model=schemas.PatientResponse)
-def update_patient(patient_id: int, patient_update: schemas.PatientUpdate, db: Session = Depends(database.get_db)):
-    db_patient = db.query(models.Patient).filter(models.Patient.id == patient_id, models.Patient.is_deleted == False).first()
-    if not db_patient: raise HTTPException(status_code=404, detail="Patient not found")
-    
-    for key, value in patient_update.dict(exclude_unset=True).items():
-        setattr(db_patient, key, value)
-    db.commit()
-    db.refresh(db_patient)
-    return db_patient
-
-@app.delete("/patients/{patient_id}", response_model=schemas.PatientResponse)
-def delete_patient(patient_id: int, db: Session = Depends(database.get_db)):
-    db_patient = db.query(models.Patient).filter(models.Patient.id == patient_id, models.Patient.is_deleted == False).first()
-    if not db_patient: raise HTTPException(status_code=404, detail="Patient not found")
-    db_patient.is_deleted = True
-    db.commit()
-    db.refresh(db_patient)
-    return db_patient
-
-# --- PRACTITIONER CRUD ---
-@app.post("/practitioners/", response_model=schemas.PractitionerResponse)
-def create_practitioner(practitioner: schemas.PractitionerCreate, db: Session = Depends(database.get_db)):
-    db_prac = models.Practitioner(**practitioner.dict())
-    db.add(db_prac)
-    db.commit()
-    db.refresh(db_prac)
-    return db_prac
-
-@app.get("/practitioners/{prac_id}", response_model=schemas.PractitionerResponse)
-def get_practitioner(prac_id: int, db: Session = Depends(database.get_db)):
-    prac = db.query(models.Practitioner).filter(models.Practitioner.id == prac_id, models.Practitioner.is_deleted == False).first()
-    if not prac: raise HTTPException(status_code=404, detail="Practitioner not found")
-    return prac
-
-@app.get("/practitioners/", response_model=List[schemas.PractitionerResponse])
-def list_practitioners(skip: int = 0, limit: int = 100, db: Session = Depends(database.get_db)):
-    return db.query(models.Practitioner).filter(models.Practitioner.is_deleted == False).offset(skip).limit(limit).all()
-
-@app.put("/practitioners/{prac_id}", response_model=schemas.PractitionerResponse)
-def update_practitioner(prac_id: int, prac_update: schemas.PractitionerUpdate, db: Session = Depends(database.get_db)):
-    db_prac = db.query(models.Practitioner).filter(models.Practitioner.id == prac_id, models.Practitioner.is_deleted == False).first()
-    if not db_prac: raise HTTPException(status_code=404, detail="Practitioner not found")
-    
-    for key, value in prac_update.dict(exclude_unset=True).items():
-        setattr(db_prac, key, value)
-    db.commit()
-    db.refresh(db_prac)
-    return db_prac
-
-@app.delete("/practitioners/{prac_id}", response_model=schemas.PractitionerResponse)
-def delete_practitioner(prac_id: int, db: Session = Depends(database.get_db)):
-    db_prac = db.query(models.Practitioner).filter(models.Practitioner.id == prac_id, models.Practitioner.is_deleted == False).first()
-    if not db_prac: raise HTTPException(status_code=404, detail="Practitioner not found")
-    db_prac.is_deleted = True
-    db.commit()
-    db.refresh(db_prac)
-    return db_prac
-
-# --- ENCOUNTER CRUD ---
-@app.post("/encounters/", response_model=schemas.EncounterResponse)
-def create_encounter(encounter: schemas.EncounterCreate, db: Session = Depends(database.get_db)):
-    db_enc = models.Encounter(**encounter.dict())
-    db.add(db_enc)
-    db.commit()
-    db.refresh(db_enc)
-    return db_enc
-
-@app.get("/encounters/{enc_id}", response_model=schemas.EncounterResponse)
-def get_encounter(enc_id: int, db: Session = Depends(database.get_db)):
-    enc = db.query(models.Encounter).filter(models.Encounter.id == enc_id, models.Encounter.is_deleted == False).first()
-    if not enc: raise HTTPException(status_code=404, detail="Encounter not found")
-    return enc
-
-@app.get("/encounters/", response_model=List[schemas.EncounterResponse])
-def list_encounters(skip: int = 0, limit: int = 100, db: Session = Depends(database.get_db)):
-    return db.query(models.Encounter).filter(models.Encounter.is_deleted == False).offset(skip).limit(limit).all()
-
-@app.put("/encounters/{enc_id}", response_model=schemas.EncounterResponse)
-def update_encounter(enc_id: int, enc_update: schemas.EncounterUpdate, db: Session = Depends(database.get_db)):
-    db_enc = db.query(models.Encounter).filter(models.Encounter.id == enc_id, models.Encounter.is_deleted == False).first()
-    if not db_enc: raise HTTPException(status_code=404, detail="Encounter not found")
-    
-    for key, value in enc_update.dict(exclude_unset=True).items():
-        setattr(db_enc, key, value)
-    db.commit()
-    db.refresh(db_enc)
-    return db_enc
-
-@app.delete("/encounters/{enc_id}", response_model=schemas.EncounterResponse)
-def delete_encounter(enc_id: int, db: Session = Depends(database.get_db)):
-    db_enc = db.query(models.Encounter).filter(models.Encounter.id == enc_id, models.Encounter.is_deleted == False).first()
-    if not db_enc: raise HTTPException(status_code=404, detail="Encounter not found")
-    db_enc.is_deleted = True
-    db.commit()
-    db.refresh(db_enc)
-    return db_enc
-
-# --- OBSERVATION CRUD ---
-@app.post("/observations/", response_model=schemas.ObservationResponse)
-def create_observation(observation: schemas.ObservationCreate, db: Session = Depends(database.get_db)):
-    db_obs = models.Observation(**observation.dict())
-    db.add(db_obs)
-    db.commit()
-    db.refresh(db_obs)
-    return db_obs
-
-@app.get("/observations/{obs_id}", response_model=schemas.ObservationResponse)
-def get_observation(obs_id: int, db: Session = Depends(database.get_db)):
-    obs = db.query(models.Observation).filter(models.Observation.id == obs_id, models.Observation.is_deleted == False).first()
-    if not obs: raise HTTPException(status_code=404, detail="Observation not found")
-    return obs
-
-@app.get("/observations/", response_model=List[schemas.ObservationResponse])
-def list_observations(skip: int = 0, limit: int = 100, db: Session = Depends(database.get_db)):
-    return db.query(models.Observation).filter(models.Observation.is_deleted == False).offset(skip).limit(limit).all()
-
-@app.put("/observations/{obs_id}", response_model=schemas.ObservationResponse)
-def update_observation(obs_id: int, obs_update: schemas.ObservationUpdate, db: Session = Depends(database.get_db)):
-    db_obs = db.query(models.Observation).filter(models.Observation.id == obs_id, models.Observation.is_deleted == False).first()
-    if not db_obs: raise HTTPException(status_code=404, detail="Observation not found")
-    
-    for key, value in obs_update.dict(exclude_unset=True).items():
-        setattr(db_obs, key, value)
-    db.commit()
-    db.refresh(db_obs)
-    return db_obs
-
-@app.delete("/observations/{obs_id}", response_model=schemas.ObservationResponse)
-def delete_observation(obs_id: int, db: Session = Depends(database.get_db)):
-    db_obs = db.query(models.Observation).filter(models.Observation.id == obs_id, models.Observation.is_deleted == False).first()
-    if not db_obs: raise HTTPException(status_code=404, detail="Observation not found")
-    db_obs.is_deleted = True
-    db.commit()
-    db.refresh(db_obs)
-    return db_obs
-
-@app.post("/test/seed-complex-workflow/{count}", tags=["Testing"])
-def seed_complex_workflow(count: int, db: Session = Depends(database.get_db)):
-    """
-    Tạo kịch bản khám bệnh thực tế: 
-    1 Bệnh nhân -> 1 Lượt khám (với 1 Bác sĩ) -> Nhiều Chỉ số sinh tồn (Observations)
-    Hành động này sẽ tạo ra một loạt event liên tiếp qua Debezium.
-    """
-    results = []
-    
-    for _ in range(count):
-        try:
-            # 1. Tạo Bệnh nhân mới
-            ts = str(int(time.time() * 1000))[-6:]
-            suffix = uuid.uuid4().hex[:4].upper()
-            patient = models.Patient(
-                patient_external_id=f"BN-WF-{ts}-{suffix}",
-                national_id=fake.unique.numerify(text='0###########'),
-                full_name=fake.name(),
-                gender=random.choice(["Nam", "Nữ", "Khác"]),
-                birth_date=fake.date_of_birth(minimum_age=1, maximum_age=90),
-                address=fake.address().replace('\n', ', '),
-                phone=fake.unique.numerify(text='09########'),
-            )
-            db.add(patient)
-            db.commit()
-            db.refresh(patient)
-            
-            # 2. Lấy 1 Bác sĩ bất kỳ (nếu chưa có thì tạo)
-            prac = db.query(models.Practitioner).first()
-            if not prac:
-                prac = models.Practitioner(
-                    practitioner_code=f"BS-WF-{ts}",
-                    full_name="Bác sĩ Mặc Định",
-                    specialty="Nội tổng hợp"
+            # Thuoc
+            for t_stt in range(1, random.randint(2, 5) + 1):
+                ma_don_thuoc = f"{''.join(random.choices(string.ascii_uppercase, k=5))}{''.join(random.choices(string.digits, k=7))}-{random.choice(string.digits)}"
+                sl = float(random.randint(1, 20))
+                gia = float(random.randint(10, 500) * 1000)
+                thuoc = models.ChiTietThuoc(
+                    dot_dieu_tri_id=encounter.ma_lk,
+                    ma_don_thuoc=ma_don_thuoc,
+                    stt=t_stt,
+                    ten_thuoc=f"Thuốc {fake.word()}",
+                    don_vi_tinh="Viên",
+                    so_luong=sl,
+                    don_gia=gia,
+                    thanh_tien=sl * gia,
+                    ma_bac_si=dr.ma_bac_si,
+                    ngay_yl=ngay_vao
                 )
-                db.add(prac)
-                db.commit()
-                db.refresh(prac)
-                
-            # 3. Tạo Encounter (Lượt khám)
-            enc = models.Encounter(
-                patient_id=patient.id,
-                practitioner_id=prac.id,
-                status="ARRIVED",
-                reason_code="Khám sức khỏe tổng quát",
-                location="Phòng Khám Nội 1"
-            )
-            db.add(enc)
-            db.commit()
-            db.refresh(enc)
-            
-            # 4. Tạo Observations (Sinh hiệu cơ bản: Nhịp tim, Huyết áp, Nhiệt độ)
-            import decimal
-            obs_list = [
-                models.Observation(
-                    encounter_id=enc.id,
-                    category="vital-signs",
-                    code_display="Nhịp tim",
-                    code_system="8867-4", # LOINC
-                    value_number=decimal.Decimal(random.randint(60, 100)),
-                    value_unit="/min"
-                ),
-                models.Observation(
-                    encounter_id=enc.id,
-                    category="vital-signs",
-                    code_display="Huyết áp tâm thu",
-                    code_system="8480-6", # LOINC
-                    value_number=decimal.Decimal(random.randint(110, 140)),
-                    value_unit="mmHg"
-                ),
-                models.Observation(
-                    encounter_id=enc.id,
-                    category="vital-signs",
-                    code_display="Nhiệt độ cơ thể",
-                    code_system="8310-5", # LOINC
-                    value_number=decimal.Decimal(round(random.uniform(36.5, 37.8), 1)),
-                    value_unit="Cel"
+                db.add(thuoc)
+        
+            # DichVuKyThuat
+            for d_stt in range(1, random.randint(1, 4) + 1):
+                sl = float(random.randint(1, 5))
+                gia = float(random.randint(50, 2000) * 1000)
+                dv = models.DichVuKyThuat(
+                    dot_dieu_tri_id=encounter.ma_lk,
+                    stt=d_stt,
+                    ten_dich_vu=f"Dịch vụ {fake.word()}",
+                    so_luong=sl,
+                    don_gia=gia,
+                    thanh_tien=sl * gia,
+                    ma_bac_si=dr.ma_bac_si,
+                    ngay_yl=ngay_vao,
+                    ngay_kq=ngay_ra
                 )
+                db.add(dv)
+
+            # CanLamSang (Xét nghiệm / Cận lâm sàng)
+            lab_tests = [
+                ("2339-0", "Glucose máu", "mmol/L", 3.9, 11.1),
+                ("6690-2", "Bạch cầu", "G/L", 4.0, 15.0),
+                ("718-7", "Hemoglobin", "g/dL", 10.0, 18.0),
+                ("2160-0", "Creatinine", "µmol/L", 44.0, 133.0),
+                ("1742-6", "ALT (SGPT)", "U/L", 5.0, 80.0),
             ]
-            db.add_all(obs_list)
-            db.commit()
-            
-            results.append({
-                "patient_id": patient.id,
-                "encounter_id": enc.id,
-                "observations_count": len(obs_list)
-            })
-            
-            # Giả lập thời gian trễ của quy trình thực tế gõ máy tính (0.5s)
-            time.sleep(0.5)
+            for c_stt, (ma_chi_so, ten_chi_so, unit, lo, hi) in enumerate(random.sample(lab_tests, k=random.randint(1, 4)), 1):
+                cls = models.CanLamSang(
+                    dot_dieu_tri_id=encounter.ma_lk,
+                    stt=c_stt,
+                    ma_dich_vu=f"XN{random.randint(100,999)}",
+                    ma_chi_so=ma_chi_so,
+                    ten_chi_so=ten_chi_so,
+                    gia_tri=f"{round(random.uniform(lo, hi), 2)} {unit}",
+                    ket_luan=random.choice(["Bình thường", "Cao", "Thấp", "Bất thường"]),
+                    ngay_kq=ngay_ra
+                )
+                db.add(cls)
 
-        except Exception as e:
-            db.rollback()
-            print(f"Error in complex seed: {e}")
-            
-    return {"status": "success", "workflows_created": len(results), "details": results}
+            # DienBienLamSang
+            for db_stt in range(1, random.randint(1, 3) + 1):
+                dbls = models.DienBienLamSang(
+                    dot_dieu_tri_id=encounter.ma_lk,
+                    stt=db_stt,
+                    dien_bien=random.choice([
+                        "Bệnh nhân sốt cao 39 độ, ho có đờm",
+                        "Huyết áp ổn định, không sốt",
+                        "Đau bụng vùng hạ sườn phải, buồn nôn",
+                        "Tình trạng cải thiện, ăn uống được"
+                    ]),
+                    hoi_chan=random.choice([None, "Hội chẩn khoa Nội: Tiếp tục điều trị nội khoa"]),
+                    phau_thuat=random.choice([None, None, "Cắt ruột thừa nội soi"]),
+                    ngay_yl=ngay_vao + timedelta(days=db_stt - 1)
+                )
+                db.add(dbls)
+
+            db.commit()
+
+    return {"message": f"Successfully seeded {created_patients} patients and related workflows"}
