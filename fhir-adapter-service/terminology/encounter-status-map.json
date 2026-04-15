@@ -14,7 +14,7 @@
         {
           "code": "1",
           "display": "Hoàn thành",
-          "target": [{ "code": "finished", "display": "Finished", "equivalence": "equal" }]
+          "target": [{ "code": "completed", "display": "Completed", "equivalence": "equal" }]
         },
         {
           "code": "2",

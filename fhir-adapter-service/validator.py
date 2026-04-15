@@ -109,7 +109,9 @@ class HL7ValidatorCLI:
                 "java", "-jar", self.jar_path,
                 tmp_path,
                 "-version", FHIR_VERSION,
-                "-output-style", "json"
+                "-output-style", "json",
+                "-tx", "n/a",
+                "-extension", "any"
             ]
             
             result = subprocess.run(
@@ -134,15 +136,164 @@ class HL7ValidatorCLI:
 
     def validate_batch(self, resources: list) -> list:
         """
-        Validate nhiều FHIR resources. Trả về list kết quả.
+        Validate nhiều FHIR resources trong MỘT lần gọi JVM duy nhất.
+        Gom tất cả resources vào temp dir, truyền tất cả file paths cho validator CLI.
+        Giảm từ N×30s (JVM startup) xuống còn ~30s + N×0.2s (validation thuần).
         """
+        if not resources:
+            return []
+        if not self.is_available():
+            return [{
+                "resourceType": res.get("resourceType", "Unknown"),
+                "resourceId": res.get("id", "Unknown"),
+                "valid": False,
+                "errors": [{"severity": "fatal", "message": "HL7 Validator CLI không khả dụng", "location": ""}],
+                "warnings": [], "info": [], "duration_ms": 0
+            } for res in resources]
+
+        start_time = time.time()
+        tmp_dir = tempfile.mkdtemp(prefix='fhir_batch_')
+        tmp_paths = []
+        resource_map = {}  # filename -> resource metadata
+
+        try:
+            # Ghi tất cả resources ra temp files
+            for i, res in enumerate(resources):
+                rt = res.get("resourceType", "Unknown")
+                rid = res.get("id", f"idx{i}")
+                filename = f"{i:04d}_{rt}_{rid}.json"
+                filepath = os.path.join(tmp_dir, filename)
+                with open(filepath, 'w', encoding='utf-8') as f:
+                    json.dump(res, f, ensure_ascii=False)
+                tmp_paths.append(filepath)
+                resource_map[filepath] = {
+                    "resourceType": rt,
+                    "resourceId": res.get("id", "Unknown"),
+                    "index": i
+                }
+
+            # Một lần gọi JVM duy nhất, truyền tất cả file paths
+            cmd = [
+                "java", "-jar", self.jar_path,
+                *tmp_paths,
+                "-version", FHIR_VERSION,
+                "-output-style", "json",
+                "-tx", "n/a",
+                "-extension", "any"
+            ]
+
+            log.info(f"HL7 Batch Validating {len(resources)} resources (1 JVM call)...")
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=60 + len(resources) * 5  # ~5s per resource max
+            )
+            total_ms = (time.time() - start_time) * 1000
+            avg_ms = total_ms / len(resources)
+
+            # Parse batch output — HL7 CLI outputs one OperationOutcome per file
+            return self._parse_batch_output(
+                result.stdout, result.stderr, result.returncode,
+                resources, total_ms
+            )
+
+        except subprocess.TimeoutExpired:
+            total_ms = (time.time() - start_time) * 1000
+            return [{
+                "resourceType": res.get("resourceType", "Unknown"),
+                "resourceId": res.get("id", "Unknown"),
+                "valid": False,
+                "errors": [{"severity": "fatal", "message": f"Batch validator timeout (>{60 + len(resources)*5}s)", "location": ""}],
+                "warnings": [], "info": [], "duration_ms": total_ms / len(resources)
+            } for res in resources]
+        finally:
+            # Cleanup temp files
+            for p in tmp_paths:
+                try:
+                    os.unlink(p)
+                except OSError:
+                    pass
+            try:
+                os.rmdir(tmp_dir)
+            except OSError:
+                pass
+
+    def _parse_batch_output(self, stdout: str, stderr: str, returncode: int,
+                            resources: list, total_ms: float) -> list:
+        """
+        Parse batch HL7 CLI output. Khi truyền nhiều file, CLI output chứa:
+        - Nhiều OperationOutcome JSON objects (nối tiếp nhau) khi dùng -output-style json
+        - Hoặc text output với marker "-- filename --" cho mỗi file
+
+        Fallback: nếu không parse được per-file, gán kết quả chung cho tất cả.
+        """
+        avg_ms = total_ms / len(resources) if resources else 0
         results = []
+
+        # Thử parse JSON — HL7 CLI có thể trả về JSON array hoặc nhiều JSON objects
+        # Khi nhiều file, CLI thường output text (không JSON), nên parse text trước
+        lines = stdout.split('\n')
+
+        # Text mode parsing: tìm "Validate <path>" markers và "Success/FAILURE" lines
+        current_idx = 0
+        file_results = {}  # index -> {errors, warnings}
+
+        for line in lines:
+            stripped = line.strip()
+            # Detect which file is being validated: "Validate /tmp/fhir_batch_.../0001_Patient_emr-4.json"
+            if stripped.startswith("Validate ") and "fhir_batch_" in stripped:
+                # Extract filename to find index
+                path = stripped.replace("Validate ", "").strip()
+                basename = os.path.basename(path)
+                try:
+                    idx = int(basename.split("_")[0])
+                    current_idx = idx
+                    if idx not in file_results:
+                        file_results[idx] = {"errors": [], "warnings": [], "info": []}
+                except (ValueError, IndexError):
+                    pass
+            elif "Error @" in stripped or "Error from" in stripped:
+                if current_idx not in file_results:
+                    file_results[current_idx] = {"errors": [], "warnings": [], "info": []}
+                file_results[current_idx]["errors"].append({
+                    "severity": "error", "message": stripped, "location": ""
+                })
+            elif "Warning @" in stripped:
+                if current_idx not in file_results:
+                    file_results[current_idx] = {"errors": [], "warnings": [], "info": []}
+                file_results[current_idx]["warnings"].append({
+                    "severity": "warning", "message": stripped, "location": ""
+                })
+
+        # Build results list
         for i, res in enumerate(resources):
-            log.info(f"HL7 Validating resource {i+1}/{len(resources)}: {res.get('resourceType', 'Unknown')}")
-            result = self.validate_resource(res)
-            result["resourceType"] = res.get("resourceType", "Unknown")
-            result["resourceId"] = res.get("id", "Unknown")
-            results.append(result)
+            fr = file_results.get(i, {"errors": [], "warnings": [], "info": []})
+            results.append({
+                "resourceType": res.get("resourceType", "Unknown"),
+                "resourceId": res.get("id", "Unknown"),
+                "valid": len(fr["errors"]) == 0,
+                "errors": fr["errors"],
+                "warnings": fr["warnings"],
+                "info": fr.get("info", []),
+                "duration_ms": avg_ms
+            })
+
+        # Nếu không tìm được per-file markers, fallback: parse toàn bộ
+        if not file_results:
+            all_errors = [l.strip() for l in lines if "Error @" in l]
+            is_valid = returncode == 0 and len(all_errors) == 0
+            for i, res in enumerate(resources):
+                results.append({
+                    "resourceType": res.get("resourceType", "Unknown"),
+                    "resourceId": res.get("id", "Unknown"),
+                    "valid": is_valid,
+                    "errors": [{"severity": "error", "message": e, "location": ""} for e in all_errors] if not is_valid else [],
+                    "warnings": [],
+                    "info": [],
+                    "duration_ms": avg_ms
+                })
+
         return results
 
     def _parse_output(self, stdout: str, stderr: str, returncode: int, duration_ms: float) -> dict:

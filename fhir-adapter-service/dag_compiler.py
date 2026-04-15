@@ -74,6 +74,15 @@ class DAGCompiler:
         action_type = rule.get("action")
         
         def action_func(data: dict, child_results: dict) -> dict:
+            # "constant" action: set a static value, no source field needed
+            if action_type == "constant":
+                final_val = rule.get("value")
+                if final_val is None:
+                    return {}
+                res = {}
+                set_nested(res, target, final_val)
+                return res
+
             val = data.get(source)
             if val is None:
                 return {}
@@ -138,6 +147,11 @@ class DAGCompiler:
                     
             res = {}
             set_nested(res, target, final_val)
+            # ext_url: automatically set extension URL alongside value
+            ext_url = rule.get("ext_url")
+            if ext_url and "extension" in target:
+                url_target = re.sub(r'\.value\w+$', '.url', target)
+                set_nested(res, url_target, ext_url)
             return res
             
         return action_func
