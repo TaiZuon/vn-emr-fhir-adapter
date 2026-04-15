@@ -3,7 +3,9 @@
     "resource_type": "Patient",
     "rules": [
       { "source": "id", "target": "id", "action": "direct" },
+      { "source": "", "target": "identifier[0].system", "action": "constant", "value": "http://hospital.vn/fhir/sid/ma-benh-nhan" },
       { "source": "ma_bn", "target": "identifier[0].value", "action": "direct" },
+      { "source": "", "target": "identifier[1].system", "action": "constant", "value": "http://hospital.vn/fhir/sid/cccd" },
       { "source": "cccd", "target": "identifier[1].value", "action": "direct" },
       { "source": "ho_ten", "target": "name[0].text", "action": "direct" },
       { 
@@ -14,16 +16,18 @@
       },
       { "source": "ngay_sinh", "target": "birthDate", "action": "date" },
       { "source": "dia_chi", "target": "address[0].text", "action": "direct" },
-      { "source": "can_nang", "target": "extension[0].valueDecimal", "action": "float" }
+      { "source": "can_nang", "target": "extension[0].valueDecimal", "action": "float", "ext_url": "http://hospital.vn/fhir/StructureDefinition/patient-weight" }
     ]
   },
   "nhan_vien_y_te": {
     "resource_type": "Practitioner",
     "rules": [
       { "source": "id", "target": "id", "action": "direct" },
+      { "source": "", "target": "identifier[0].system", "action": "constant", "value": "http://hospital.vn/fhir/sid/ma-bac-si" },
       { "source": "ma_bac_si", "target": "identifier[0].value", "action": "direct" },
       { "source": "ho_ten", "target": "name[0].text", "action": "direct" },
       { "source": "chuyen_khoa", "target": "qualification[0].code.text", "action": "direct" },
+      { "source": "", "target": "telecom[0].system", "action": "constant", "value": "phone" },
       { "source": "so_dien_thoai", "target": "telecom[0].value", "action": "direct" }
     ]
   },
@@ -31,8 +35,9 @@
     "resource_type": "Encounter",
     "rules": [
       { "source": "ma_lk", "target": "id", "action": "direct" },
+      { "source": "", "target": "identifier[0].system", "action": "constant", "value": "http://hospital.vn/fhir/sid/ma-lien-ket" },
       { "source": "ma_lk", "target": "identifier[0].value", "action": "direct" },
-      { "source": "ma_the", "target": "extension[0].valueString", "action": "direct" },
+      { "source": "ma_the", "target": "extension[0].valueString", "action": "direct", "ext_url": "http://hospital.vn/fhir/StructureDefinition/insurance-card-number" },
       { "source": "ngay_vao", "target": "actualPeriod.start", "action": "date" },
       { "source": "ngay_ra", "target": "actualPeriod.end", "action": "date" },
       { "source": "ma_benh", "target": "diagnosis[0].condition[0].concept.coding[0]", "action": "terminology_lookup", "system": "vn-emr-icd10-map" },
@@ -52,6 +57,7 @@
     "resource_type": "MedicationRequest",
     "rules": [
       { "source": "id", "target": "id", "action": "direct" },
+      { "source": "", "target": "identifier[0].system", "action": "constant", "value": "http://hospital.vn/fhir/sid/ma-don-thuoc" },
       { "source": "ma_don_thuoc", "target": "identifier[0].value", "action": "direct" },
       { "source": "ma_thuoc", "target": "medication.concept.coding[0]", "action": "terminology_lookup", "system": "vn-emr-medication-map" },
       { "source": "ten_thuoc", "target": "medication.concept.text", "action": "direct" },
@@ -60,8 +66,8 @@
       { "source": "duong_dung", "target": "dosageInstruction[0].route.text", "action": "direct" },
       { "source": "lieu_dung", "target": "dosageInstruction[0].text", "action": "direct" },
       { "source": "so_luong", "target": "dispenseRequest.quantity.value", "action": "float" },
-      { "source": "don_gia", "target": "extension[0].valueDecimal", "action": "float" },
-      { "source": "thanh_tien", "target": "extension[1].valueDecimal", "action": "float" },
+      { "source": "don_gia", "target": "extension[0].valueDecimal", "action": "float", "ext_url": "http://hospital.vn/fhir/StructureDefinition/unit-price" },
+      { "source": "thanh_tien", "target": "extension[1].valueDecimal", "action": "float", "ext_url": "http://hospital.vn/fhir/StructureDefinition/total-cost" },
       { "source": "ngay_yl", "target": "authoredOn", "action": "date" },
       { "source": "dot_dieu_tri_id", "target": "encounter.reference", "action": "reference", "ref_type": "Encounter" },
       { "source": "ma_bac_si", "target": "requester.reference", "action": "reference", "ref_type": "Practitioner" },
@@ -74,11 +80,11 @@
       { "source": "id", "target": "id", "action": "direct" },
       { "source": "ma_dich_vu", "target": "code.coding[0]", "action": "terminology_lookup", "system": "vn-emr-procedure-map" },
       { "source": "ten_dich_vu", "target": "code.text", "action": "direct" },
-      { "source": "ma_vat_tu", "target": "usedCode[0].coding[0].code", "action": "direct" },
-      { "source": "ten_vat_tu", "target": "usedCode[0].coding[0].display", "action": "direct" },
-      { "source": "so_luong", "target": "extension[0].valueDecimal", "action": "float" },
-      { "source": "don_gia", "target": "extension[1].valueDecimal", "action": "float" },
-      { "source": "thanh_tien", "target": "extension[2].valueDecimal", "action": "float" },
+      { "source": "ma_vat_tu", "target": "used[0].concept.coding[0].code", "action": "direct" },
+      { "source": "ten_vat_tu", "target": "used[0].concept.coding[0].display", "action": "direct" },
+      { "source": "so_luong", "target": "extension[0].valueDecimal", "action": "float", "ext_url": "http://hospital.vn/fhir/StructureDefinition/quantity" },
+      { "source": "don_gia", "target": "extension[1].valueDecimal", "action": "float", "ext_url": "http://hospital.vn/fhir/StructureDefinition/unit-price" },
+      { "source": "thanh_tien", "target": "extension[2].valueDecimal", "action": "float", "ext_url": "http://hospital.vn/fhir/StructureDefinition/total-cost" },
       { "source": "ma_khoa", "target": "location.reference", "action": "direct" },
       { "source": "ngay_yl", "target": "occurrencePeriod.start", "action": "date" },
       { "source": "ngay_kq", "target": "occurrencePeriod.end", "action": "date" },

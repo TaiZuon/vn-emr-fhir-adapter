@@ -109,7 +109,9 @@ class HL7ValidatorCLI:
                 "java", "-jar", self.jar_path,
                 tmp_path,
                 "-version", FHIR_VERSION,
-                "-output-style", "json"
+                "-output-style", "json",
+                "-tx", "n/a",
+                "-extension", "any"
             ]
             
             result = subprocess.run(

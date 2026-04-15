@@ -19,12 +19,21 @@ class RuleNode(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 def deep_merge(dict1: dict, dict2: dict) -> dict:
-    """Recursively merges dict2 into dict1, concatenating lists to support 1:N mappings."""
+    """Recursively merges dict2 into dict1, merging list elements by index."""
     for key, val in dict2.items():
         if isinstance(val, dict) and key in dict1 and isinstance(dict1[key], dict):
             deep_merge(dict1[key], val)
         elif isinstance(val, list) and key in dict1 and isinstance(dict1[key], list):
-            dict1[key].extend(val)
+            # Merge by index (pad if needed)
+            while len(dict1[key]) < len(val):
+                dict1[key].append(None)
+            for i, item in enumerate(val):
+                if item is None:
+                    continue
+                if isinstance(item, dict) and dict1[key][i] is not None and isinstance(dict1[key][i], dict):
+                    deep_merge(dict1[key][i], item)
+                else:
+                    dict1[key][i] = item
         else:
             dict1[key] = val
     return dict1
