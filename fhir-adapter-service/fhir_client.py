@@ -40,20 +40,19 @@ class HAPIFHIRClient:
             self._available = False
         return self._available
 
-    def save_resource(self, resource_obj, resource_dict: dict = None) -> str:
+    def save_resource(self, resource_obj) -> str:
         """
         Lưu FHIR Resource lên HAPI Server bằng PUT (upsert).
         
         Args:
             resource_obj: Pydantic FHIR resource object (từ fhir.resources)
-            resource_dict: dict đã xử lý (nếu có, dùng thay vì serialize từ resource_obj)
             
         Returns:
             FHIR ID nếu thành công, None nếu thất bại.
         """
         try:
             resource_type = resource_obj.__class__.__name__
-            resource_json = resource_dict if resource_dict else json.loads(resource_obj.json())
+            resource_json = json.loads(resource_obj.json())
             resource_id = resource_json.get("id")
 
             if resource_id:
