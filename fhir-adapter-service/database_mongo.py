@@ -43,9 +43,10 @@ class FHIRStore:
             inserted_id = resource_data['_id']
             print(f" [💾] MongoDB: Đã lưu {resource_type} với ID: {inserted_id}")
 
-            # 2. Gửi lên HAPI FHIR Server (nếu available)
+            # 2. Gửi lên HAPI FHIR Server (nếu available) — mã hóa PII chọn lọc
             if self.hapi_enabled:
-                hapi_id = hapi_client.save_resource(resource_obj)
+                hapi_data = crypto_service.encrypt_for_hapi(resource_data)
+                hapi_id = hapi_client.save_resource(resource_obj, resource_dict=hapi_data)
                 if hapi_id:
                     print(f" [🏥] HAPI: Đã lưu {resource_type}/{hapi_id}")
                 else:

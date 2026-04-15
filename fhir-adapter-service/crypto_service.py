@@ -54,6 +54,22 @@ SENSITIVE_FIELDS = {
     ],
 }
 
+# Trường mã hóa khi gửi lên HAPI FHIR Server
+# Chỉ encrypt giá trị nhạy cảm (value), giữ nguyên cấu trúc FHIR hợp lệ
+HAPI_ENCRYPT_PATHS = {
+    "Patient": {
+        "identifier": ["value"],           # CCCD, mã BN — encrypt value, giữ system/type
+        "name": ["text", "family", "given"],  # Họ tên
+        "telecom": ["value"],              # SĐT
+        "address": ["text", "line"],       # Địa chỉ
+    },
+    "Practitioner": {
+        "identifier": ["value"],           # Mã bác sĩ
+        "name": ["text", "family", "given"],
+        "telecom": ["value"],
+    },
+}
+
 
 class CryptoService:
     """
@@ -142,6 +158,44 @@ class CryptoService:
         del decrypted["_encrypted_fields"]
         
         return decrypted
+
+    def encrypt_for_hapi(self, resource_data: dict) -> dict:
+        """
+        Mã hóa chọn lọc cho HAPI FHIR Server.
+        Chỉ encrypt giá trị nhạy cảm (identifier.value, name.text, ...),
+        giữ nguyên cấu trúc FHIR hợp lệ (system, type, use...) để HAPI chấp nhận.
+        """
+        resource_type = resource_data.get("resourceType", "")
+        paths = HAPI_ENCRYPT_PATHS.get(resource_type)
+
+        if not paths:
+            return resource_data
+
+        import copy
+        result = copy.deepcopy(resource_data)
+
+        for field, subkeys in paths.items():
+            if field not in result or result[field] is None:
+                continue
+            value = result[field]
+            if isinstance(value, list):
+                result[field] = [
+                    self._encrypt_subkeys(item, subkeys) if isinstance(item, dict) else item
+                    for item in value
+                ]
+            elif isinstance(value, dict):
+                result[field] = self._encrypt_subkeys(value, subkeys)
+
+        log.debug(f"HAPI encrypt: {resource_type} — encrypted fields: {list(paths.keys())}")
+        return result
+
+    def _encrypt_subkeys(self, obj: dict, subkeys: list) -> dict:
+        """Mã hóa chỉ các subkey chỉ định bên trong dict, giữ nguyên structure."""
+        for key in subkeys:
+            if key not in obj or obj[key] is None:
+                continue
+            obj[key] = self._encrypt_value(obj[key])
+        return obj
 
     def _encrypt_value(self, value):
         """Đệ quy mã hóa giá trị: string, list, hoặc dict."""
