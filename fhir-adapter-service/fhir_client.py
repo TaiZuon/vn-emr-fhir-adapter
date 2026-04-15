@@ -23,8 +23,8 @@ class HAPIFHIRClient:
 
     def is_available(self) -> bool:
         """Kiểm tra HAPI FHIR Server có sẵn sàng không."""
-        if self._available is not None:
-            return self._available
+        if self._available is True:
+            return True
         try:
             resp = self.session.get(
                 f"{self.base_url}/metadata",
