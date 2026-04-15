@@ -1,8 +1,12 @@
 global:
-  scrape_interval: 5s # 5 giây lấy dữ liệu một lần (để demo cho nhanh)
+  scrape_interval: 5s
 
 scrape_configs:
   - job_name: 'fhir-adapter'
     static_configs:
-      # Thay '192.168.1.x' bằng IP máy em hoặc 'host.docker.internal'
       - targets: ['host.docker.internal:8008']
+
+  - job_name: 'pushgateway'
+    honor_labels: true
+    static_configs:
+      - targets: ['pushgateway:9091']

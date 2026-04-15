@@ -45,3 +45,28 @@ hapi-ui:
 	@echo "HAPI FHIR UI: http://localhost:8080"
 	@echo "FHIR API:     http://localhost:8080/fhir"
 	@echo "Metadata:     http://localhost:8080/fhir/metadata"
+
+# Benchmark
+benchmark:
+	cd fhir-adapter-service && python3 benchmark.py --output results/ --push
+
+benchmark-1:
+	cd fhir-adapter-service && python3 benchmark.py -e 1 --output results/ --push
+
+benchmark-2:
+	cd fhir-adapter-service && python3 benchmark.py -e 2 --output results/ --push
+
+benchmark-3:
+	cd fhir-adapter-service && python3 benchmark.py -e 3 --output results/ --push
+
+benchmark-4:
+	cd fhir-adapter-service && python3 benchmark.py -e 4 --output results/ --push
+
+benchmark-5:
+	cd fhir-adapter-service && python3 benchmark.py -e 5 --output results/ --push
+
+# Grafana
+grafana:
+	@echo "Grafana:      http://localhost:3000  (admin/admin)"
+	@echo "Pushgateway:  http://localhost:9091"
+	@echo "Prometheus:   http://localhost:9090"
