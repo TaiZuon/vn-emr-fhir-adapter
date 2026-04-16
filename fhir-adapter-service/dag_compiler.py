@@ -108,6 +108,15 @@ class DAGCompiler:
                         raw_bytes = base64.b64decode(val["value"])
                         unscaled = int.from_bytes(raw_bytes, byteorder="big", signed=True)
                         final_val = float(unscaled) / (10 ** val["scale"])
+                    elif isinstance(val, str):
+                        # Debezium decimal dạng base64 string (không có scale wrapper)
+                        import base64
+                        try:
+                            raw_bytes = base64.b64decode(val)
+                            unscaled = int.from_bytes(raw_bytes, byteorder="big", signed=True)
+                            final_val = float(unscaled)
+                        except Exception:
+                            final_val = 0.0
             elif action_type == "date":
                 if hasattr(val, 'isoformat'):
                     final_val = val.isoformat()
@@ -116,6 +125,20 @@ class DAGCompiler:
                         final_val = datetime.datetime.fromtimestamp(val / 1000000.0).isoformat() + "Z"
                     else:
                         final_val = (datetime.date(1970, 1, 1) + datetime.timedelta(days=val)).isoformat()
+                elif isinstance(val, str):
+                    # QĐ-130 format: yyyymmddHHMM (12 chars) hoặc yyyymmdd (8 chars)
+                    if len(val) == 12 and val.isdigit():
+                        date_part = f"{val[:4]}-{val[4:6]}-{val[6:8]}"
+                        if val[8:12] == "0000":
+                            # Chỉ có ngày (birthDate) → FHIR date: YYYY-MM-DD
+                            final_val = date_part
+                        else:
+                            # Có giờ phút → FHIR dateTime: cần timezone (+07:00 cho VN)
+                            final_val = f"{date_part}T{val[8:10]}:{val[10:12]}:00+07:00"
+                    elif len(val) == 8 and val.isdigit():
+                        final_val = f"{val[:4]}-{val[4:6]}-{val[6:8]}"
+                    else:
+                        final_val = val
             elif action_type == "reference":
                 ref_type = rule.get("ref_type")
                 resolved = ref_manager.resolve(ref_type, val)

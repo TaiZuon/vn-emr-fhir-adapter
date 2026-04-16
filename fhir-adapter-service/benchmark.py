@@ -143,10 +143,11 @@ def generate_test_records(count: int) -> List[Dict[str, Any]]:
             "_table": "benh_nhan", "id": i,
             "ho_ten": f"Nguyễn Văn BN{i}",
             "gioi_tinh": random.choice([1, 2]),
-            "ngay_sinh": f"19{random.randint(60, 99)}-{random.randint(1, 12):02d}-{random.randint(1, 28):02d}",
+            "ngay_sinh": f"19{random.randint(60, 99)}{random.randint(1, 12):02d}{random.randint(1, 28):02d}0000",
             "dia_chi": f"Số {i}, Đường Lê Lợi, Quận {random.randint(1, 12)}, TP.HCM",
             "cccd": f"{random.randint(10, 99):02d}{random.randint(1000000000, 9999999999)}",
             "so_dien_thoai": f"09{random.randint(10000000, 99999999)}",
+            "can_nang": round(random.uniform(3.0, 90.0), 1),
         }),
         # 10% Practitioner (nhan_vien_y_te)
         ("nhan_vien_y_te", lambda i: {
@@ -164,8 +165,8 @@ def generate_test_records(count: int) -> List[Dict[str, Any]]:
             "ma_bac_si": f"BS{random.randint(1, max(1, count // 10)):04d}",
             "ma_benh": random.choice(ICD10_CODES),
             "ten_benh": "Bệnh test",
-            "ngay_vao": "2024-01-01T08:00:00Z",
-            "ngay_ra": "2024-01-05T16:00:00Z",
+            "ngay_vao": "202401010800",
+            "ngay_ra": "202401051600",
             "ket_qua_dtri": random.choice([1, 2, 3]),
         }),
         # 20% MedicationRequest (chi_tiet_thuoc)
@@ -176,7 +177,7 @@ def generate_test_records(count: int) -> List[Dict[str, Any]]:
             "ten_thuoc": "Thuốc test",
             "so_luong": random.randint(1, 30),
             "don_gia": round(random.uniform(5000, 500000), 2),
-            "ngay_yl": "2024-01-02T10:00:00Z",
+            "ngay_yl": "202401021000",
         }),
         # 20% Observation (can_lam_sang)
         ("can_lam_sang", lambda i: {
@@ -185,7 +186,7 @@ def generate_test_records(count: int) -> List[Dict[str, Any]]:
             "ma_chi_so": random.choice(LOINC_CODES),
             "ten_chi_so": "Chỉ số test",
             "gia_tri": str(round(random.uniform(1, 200), 1)),
-            "ngay_kq": "2024-01-03T14:00:00Z",
+            "ngay_kq": "202401031400",
         }),
         # 10% ClinicalImpression (dien_bien_lam_sang)
         ("dien_bien_lam_sang", lambda i: {
@@ -193,7 +194,7 @@ def generate_test_records(count: int) -> List[Dict[str, Any]]:
             "dot_dieu_tri_id": f"LK{random.randint(1, max(1, count // 3)):08X}",
             "dien_bien": f"Bệnh nhân ổn định, theo dõi tiếp #{i}",
             "hoi_chan": "Hội chẩn thường quy",
-            "ngay_yl": "2024-01-04T09:00:00Z",
+            "ngay_yl": "202401040900",
         }),
     ]
 

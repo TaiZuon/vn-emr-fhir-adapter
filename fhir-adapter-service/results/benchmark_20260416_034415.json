@@ -1,0 +1,879 @@
+{
+  "thesis": "Xây dựng mô hình và thực nghiệm liên thông dữ liệu bệnh án điện tử theo tiêu chuẩn HL7 FHIR",
+  "timestamp": "2026-04-16T03:40:01.971329",
+  "environment": {
+    "os": {
+      "name": "Linux",
+      "release": "6.17.0-20-generic",
+      "distribution": "Ubuntu 24.04.2 LTS"
+    },
+    "hardware": {
+      "cpu_cores": 12,
+      "cpu_model": "AMD Ryzen 5 5500U with Radeon Graphics",
+      "threads_per_core": 2,
+      "ram_total_gb": 15.0
+    },
+    "software": {
+      "python": "3.12.3",
+      "pydantic": "2.12.5",
+      "cryptography": "46.0.7"
+    }
+  },
+  "experiments": {
+    "TN1": {
+      "experiment": "TN1_correctness",
+      "input_records": 1000,
+      "transform_success": 1000,
+      "transform_fail": 0,
+      "schema_valid": 1000,
+      "schema_invalid": 0,
+      "schema_rate": 100.0,
+      "pydantic_avg_ms": 0.3581,
+      "by_resource_type": {
+        "MedicationRequest": {
+          "total": 207,
+          "success": 207,
+          "fail": 0,
+          "rate": 100.0
+        },
+        "Observation": {
+          "total": 194,
+          "success": 194,
+          "fail": 0,
+          "rate": 100.0
+        },
+        "Patient": {
+          "total": 204,
+          "success": 204,
+          "fail": 0,
+          "rate": 100.0
+        },
+        "Encounter": {
+          "total": 203,
+          "success": 203,
+          "fail": 0,
+          "rate": 100.0
+        },
+        "Practitioner": {
+          "total": 112,
+          "success": 112,
+          "fail": 0,
+          "rate": 100.0
+        },
+        "ClinicalImpression": {
+          "total": 80,
+          "success": 80,
+          "fail": 0,
+          "rate": 100.0
+        }
+      },
+      "hl7_cli": {
+        "sample_size": 20,
+        "valid": 20,
+        "invalid": 0,
+        "validity_rate": 100.0,
+        "avg_ms": 1624.8664
+      },
+      "false_negatives": 0,
+      "speedup_pydantic_vs_hl7": 4537.0
+    },
+    "TN2": {
+      "experiment": "TN2_performance",
+      "results": [
+        {
+          "record_count": 100,
+          "success_count": 100,
+          "error_count": 0,
+          "success_rate": 100.0,
+          "total_ms": 275.92,
+          "throughput_rps": 362.4,
+          "latency": {
+            "avg": 2.7584,
+            "median": 2.5999,
+            "p95": 4.6894,
+            "p99": 6.1998,
+            "min": 1.1027,
+            "max": 6.1998,
+            "std": 1.1628
+          }
+        },
+        {
+          "record_count": 500,
+          "success_count": 500,
+          "error_count": 0,
+          "success_rate": 100.0,
+          "total_ms": 1551.4,
+          "throughput_rps": 322.3,
+          "latency": {
+            "avg": 3.1017,
+            "median": 3.1377,
+            "p95": 5.6269,
+            "p99": 7.9832,
+            "min": 1.0048,
+            "max": 11.3013,
+            "std": 1.4568
+          }
+        },
+        {
+          "record_count": 1000,
+          "success_count": 1000,
+          "error_count": 0,
+          "success_rate": 100.0,
+          "total_ms": 3193.7,
+          "throughput_rps": 313.1,
+          "latency": {
+            "avg": 3.1925,
+            "median": 3.1055,
+            "p95": 6.1898,
+            "p99": 11.8728,
+            "min": 1.0211,
+            "max": 16.6681,
+            "std": 1.8747
+          }
+        },
+        {
+          "record_count": 2000,
+          "success_count": 2000,
+          "error_count": 0,
+          "success_rate": 100.0,
+          "total_ms": 5758.78,
+          "throughput_rps": 347.3,
+          "latency": {
+            "avg": 2.8782,
+            "median": 2.9109,
+            "p95": 5.1346,
+            "p99": 6.8924,
+            "min": 0.9468,
+            "max": 10.7238,
+            "std": 1.2842
+          }
+        },
+        {
+          "record_count": 5000,
+          "success_count": 5000,
+          "error_count": 0,
+          "success_rate": 100.0,
+          "total_ms": 15220.78,
+          "throughput_rps": 328.5,
+          "latency": {
+            "avg": 3.043,
+            "median": 2.9848,
+            "p95": 5.8635,
+            "p99": 9.4383,
+            "min": 0.9614,
+            "max": 17.6543,
+            "std": 1.6243
+          }
+        },
+        {
+          "record_count": 10000,
+          "success_count": 10000,
+          "error_count": 0,
+          "success_rate": 100.0,
+          "total_ms": 31617.58,
+          "throughput_rps": 316.3,
+          "latency": {
+            "avg": 3.1604,
+            "median": 3.0212,
+            "p95": 6.8158,
+            "p99": 9.7071,
+            "min": 0.8728,
+            "max": 19.0707,
+            "std": 1.8199
+          }
+        }
+      ]
+    },
+    "TN3": {
+      "experiment": "TN3_encryption_overhead",
+      "results": [
+        {
+          "input_records": 100,
+          "fhir_resources": 100,
+          "no_encryption_ms": 0.6,
+          "with_encryption_ms": 6.25,
+          "decryption_ms": 4.23,
+          "overhead_percent": 941.6,
+          "encrypt_per_resource": {
+            "avg": 0.0548,
+            "median": 0.062,
+            "p95": 0.082,
+            "p99": 0.1928,
+            "min": 0.0182,
+            "max": 0.1928,
+            "std": 0.0223
+          },
+          "decrypt_per_resource": {
+            "avg": 0.0227,
+            "median": 0.0305,
+            "p95": 0.0363,
+            "p99": 0.0476,
+            "min": 0.0002,
+            "max": 0.0476,
+            "std": 0.0124
+          }
+        },
+        {
+          "input_records": 500,
+          "fhir_resources": 500,
+          "no_encryption_ms": 3.01,
+          "with_encryption_ms": 33.95,
+          "decryption_ms": 9.15,
+          "overhead_percent": 1028.0,
+          "encrypt_per_resource": {
+            "avg": 0.0588,
+            "median": 0.0627,
+            "p95": 0.103,
+            "p99": 0.1533,
+            "min": 0.0179,
+            "max": 0.2335,
+            "std": 0.027
+          },
+          "decrypt_per_resource": {
+            "avg": 0.0239,
+            "median": 0.0302,
+            "p95": 0.0453,
+            "p99": 0.0662,
+            "min": 0.0001,
+            "max": 0.0905,
+            "std": 0.0153
+          }
+        },
+        {
+          "input_records": 1000,
+          "fhir_resources": 1000,
+          "no_encryption_ms": 5.94,
+          "with_encryption_ms": 74.49,
+          "decryption_ms": 21.64,
+          "overhead_percent": 1153.2,
+          "encrypt_per_resource": {
+            "avg": 0.0578,
+            "median": 0.0628,
+            "p95": 0.0888,
+            "p99": 0.1212,
+            "min": 0.0181,
+            "max": 0.463,
+            "std": 0.0258
+          },
+          "decrypt_per_resource": {
+            "avg": 0.0249,
+            "median": 0.0302,
+            "p95": 0.0493,
+            "p99": 0.0556,
+            "min": 0.0001,
+            "max": 0.2071,
+            "std": 0.0168
+          }
+        },
+        {
+          "input_records": 2000,
+          "fhir_resources": 2000,
+          "no_encryption_ms": 11.58,
+          "with_encryption_ms": 135.16,
+          "decryption_ms": 36.86,
+          "overhead_percent": 1067.5,
+          "encrypt_per_resource": {
+            "avg": 0.0552,
+            "median": 0.0623,
+            "p95": 0.0847,
+            "p99": 0.1077,
+            "min": 0.0176,
+            "max": 0.1945,
+            "std": 0.0213
+          },
+          "decrypt_per_resource": {
+            "avg": 0.0224,
+            "median": 0.0304,
+            "p95": 0.0379,
+            "p99": 0.0475,
+            "min": 0.0001,
+            "max": 0.0597,
+            "std": 0.0135
+          }
+        },
+        {
+          "input_records": 5000,
+          "fhir_resources": 5000,
+          "no_encryption_ms": 29.07,
+          "with_encryption_ms": 343.48,
+          "decryption_ms": 92.53,
+          "overhead_percent": 1081.8,
+          "encrypt_per_resource": {
+            "avg": 0.0617,
+            "median": 0.0648,
+            "p95": 0.1016,
+            "p99": 0.1249,
+            "min": 0.0175,
+            "max": 0.2243,
+            "std": 0.0253
+          },
+          "decrypt_per_resource": {
+            "avg": 0.025,
+            "median": 0.0305,
+            "p95": 0.0497,
+            "p99": 0.0583,
+            "min": 0.0001,
+            "max": 0.116,
+            "std": 0.0158
+          }
+        },
+        {
+          "input_records": 10000,
+          "fhir_resources": 10000,
+          "no_encryption_ms": 62.29,
+          "with_encryption_ms": 704.54,
+          "decryption_ms": 187.18,
+          "overhead_percent": 1031.1,
+          "encrypt_per_resource": {
+            "avg": 0.0713,
+            "median": 0.066,
+            "p95": 0.1089,
+            "p99": 0.1425,
+            "min": 0.0178,
+            "max": 63.3012,
+            "std": 0.6331
+          },
+          "decrypt_per_resource": {
+            "avg": 0.0273,
+            "median": 0.0311,
+            "p95": 0.054,
+            "p99": 0.0638,
+            "min": 0.0001,
+            "max": 0.1848,
+            "std": 0.0177
+          }
+        }
+      ]
+    },
+    "TN4": {
+      "experiment": "TN4_pipeline_breakdown",
+      "results": [
+        {
+          "record_count": 100,
+          "success_count": 100,
+          "phases": {
+            "transform": {
+              "count": 100,
+              "total_ms": 219.13,
+              "percent": 75.3,
+              "avg_ms": 2.1913,
+              "median_ms": 2.3887,
+              "p95_ms": 4.0935,
+              "p99_ms": 4.9283,
+              "min_ms": 0.5273,
+              "max_ms": 4.9283,
+              "std_ms": 1.1574
+            },
+            "schema_init": {
+              "count": 100,
+              "total_ms": 20.94,
+              "percent": 7.2,
+              "avg_ms": 0.2094,
+              "median_ms": 0.1876,
+              "p95_ms": 0.3724,
+              "p99_ms": 0.5454,
+              "min_ms": 0.0884,
+              "max_ms": 0.5454,
+              "std_ms": 0.0808
+            },
+            "serialize_pydantic": {
+              "count": 100,
+              "total_ms": 31.34,
+              "percent": 10.8,
+              "avg_ms": 0.3134,
+              "median_ms": 0.2881,
+              "p95_ms": 0.5169,
+              "p99_ms": 0.8284,
+              "min_ms": 0.1711,
+              "max_ms": 0.8284,
+              "std_ms": 0.1099
+            },
+            "encrypt": {
+              "count": 100,
+              "total_ms": 17.77,
+              "percent": 6.1,
+              "avg_ms": 0.1777,
+              "median_ms": 0.1809,
+              "p95_ms": 0.3425,
+              "p99_ms": 0.485,
+              "min_ms": 0.029,
+              "max_ms": 0.485,
+              "std_ms": 0.0841
+            },
+            "serialize_final": {
+              "count": 100,
+              "total_ms": 1.88,
+              "percent": 0.6,
+              "avg_ms": 0.0188,
+              "median_ms": 0.0177,
+              "p95_ms": 0.0298,
+              "p99_ms": 0.0386,
+              "min_ms": 0.0121,
+              "max_ms": 0.0386,
+              "std_ms": 0.0053
+            }
+          },
+          "total_pipeline_ms": 291.06,
+          "throughput_rps": 343.6
+        },
+        {
+          "record_count": 500,
+          "success_count": 500,
+          "phases": {
+            "transform": {
+              "count": 500,
+              "total_ms": 1176.32,
+              "percent": 75.5,
+              "avg_ms": 2.3526,
+              "median_ms": 2.4041,
+              "p95_ms": 5.3295,
+              "p99_ms": 6.6419,
+              "min_ms": 0.5462,
+              "max_ms": 8.8567,
+              "std_ms": 1.421
+            },
+            "schema_init": {
+              "count": 500,
+              "total_ms": 112.42,
+              "percent": 7.2,
+              "avg_ms": 0.2248,
+              "median_ms": 0.1931,
+              "p95_ms": 0.4133,
+              "p99_ms": 0.7168,
+              "min_ms": 0.0987,
+              "max_ms": 1.0039,
+              "std_ms": 0.1055
+            },
+            "serialize_pydantic": {
+              "count": 500,
+              "total_ms": 169.51,
+              "percent": 10.9,
+              "avg_ms": 0.339,
+              "median_ms": 0.3044,
+              "p95_ms": 0.6102,
+              "p99_ms": 0.8031,
+              "min_ms": 0.1532,
+              "max_ms": 0.8265,
+              "std_ms": 0.131
+            },
+            "encrypt": {
+              "count": 500,
+              "total_ms": 89.13,
+              "percent": 5.7,
+              "avg_ms": 0.1783,
+              "median_ms": 0.1743,
+              "p95_ms": 0.3369,
+              "p99_ms": 0.4609,
+              "min_ms": 0.0276,
+              "max_ms": 1.0844,
+              "std_ms": 0.1029
+            },
+            "serialize_final": {
+              "count": 500,
+              "total_ms": 10.43,
+              "percent": 0.7,
+              "avg_ms": 0.0209,
+              "median_ms": 0.018,
+              "p95_ms": 0.0359,
+              "p99_ms": 0.0481,
+              "min_ms": 0.0111,
+              "max_ms": 0.0716,
+              "std_ms": 0.0079
+            }
+          },
+          "total_pipeline_ms": 1557.8,
+          "throughput_rps": 321.0
+        },
+        {
+          "record_count": 1000,
+          "success_count": 1000,
+          "phases": {
+            "transform": {
+              "count": 1000,
+              "total_ms": 2338.08,
+              "percent": 76.4,
+              "avg_ms": 2.3381,
+              "median_ms": 2.3161,
+              "p95_ms": 4.7037,
+              "p99_ms": 8.8622,
+              "min_ms": 0.5114,
+              "max_ms": 26.6643,
+              "std_ms": 1.7246
+            },
+            "schema_init": {
+              "count": 1000,
+              "total_ms": 207.66,
+              "percent": 6.8,
+              "avg_ms": 0.2077,
+              "median_ms": 0.1799,
+              "p95_ms": 0.3562,
+              "p99_ms": 0.5242,
+              "min_ms": 0.0895,
+              "max_ms": 1.7776,
+              "std_ms": 0.093
+            },
+            "serialize_pydantic": {
+              "count": 1000,
+              "total_ms": 322.5,
+              "percent": 10.5,
+              "avg_ms": 0.3225,
+              "median_ms": 0.2968,
+              "p95_ms": 0.5348,
+              "p99_ms": 0.7298,
+              "min_ms": 0.1626,
+              "max_ms": 0.9748,
+              "std_ms": 0.1187
+            },
+            "encrypt": {
+              "count": 1000,
+              "total_ms": 171.11,
+              "percent": 5.6,
+              "avg_ms": 0.1711,
+              "median_ms": 0.1704,
+              "p95_ms": 0.3274,
+              "p99_ms": 0.5229,
+              "min_ms": 0.0274,
+              "max_ms": 3.1614,
+              "std_ms": 0.135
+            },
+            "serialize_final": {
+              "count": 1000,
+              "total_ms": 19.79,
+              "percent": 0.6,
+              "avg_ms": 0.0198,
+              "median_ms": 0.017,
+              "p95_ms": 0.0371,
+              "p99_ms": 0.0591,
+              "min_ms": 0.011,
+              "max_ms": 0.1281,
+              "std_ms": 0.0097
+            }
+          },
+          "total_pipeline_ms": 3059.14,
+          "throughput_rps": 326.9
+        },
+        {
+          "record_count": 2000,
+          "success_count": 2000,
+          "phases": {
+            "transform": {
+              "count": 2000,
+              "total_ms": 4602.24,
+              "percent": 76.0,
+              "avg_ms": 2.3011,
+              "median_ms": 2.3559,
+              "p95_ms": 4.6532,
+              "p99_ms": 6.8938,
+              "min_ms": 0.4698,
+              "max_ms": 13.5939,
+              "std_ms": 1.398
+            },
+            "schema_init": {
+              "count": 2000,
+              "total_ms": 421.41,
+              "percent": 7.0,
+              "avg_ms": 0.2107,
+              "median_ms": 0.1859,
+              "p95_ms": 0.3595,
+              "p99_ms": 0.5083,
+              "min_ms": 0.0939,
+              "max_ms": 0.7863,
+              "std_ms": 0.0819
+            },
+            "serialize_pydantic": {
+              "count": 2000,
+              "total_ms": 654.95,
+              "percent": 10.8,
+              "avg_ms": 0.3275,
+              "median_ms": 0.2977,
+              "p95_ms": 0.5521,
+              "p99_ms": 0.7953,
+              "min_ms": 0.1479,
+              "max_ms": 1.7499,
+              "std_ms": 0.127
+            },
+            "encrypt": {
+              "count": 2000,
+              "total_ms": 339.09,
+              "percent": 5.6,
+              "avg_ms": 0.1695,
+              "median_ms": 0.1716,
+              "p95_ms": 0.3258,
+              "p99_ms": 0.4904,
+              "min_ms": 0.0274,
+              "max_ms": 0.7847,
+              "std_ms": 0.0954
+            },
+            "serialize_final": {
+              "count": 2000,
+              "total_ms": 40.23,
+              "percent": 0.7,
+              "avg_ms": 0.0201,
+              "median_ms": 0.0174,
+              "p95_ms": 0.0362,
+              "p99_ms": 0.0543,
+              "min_ms": 0.0102,
+              "max_ms": 0.1143,
+              "std_ms": 0.0085
+            }
+          },
+          "total_pipeline_ms": 6057.91,
+          "throughput_rps": 330.1
+        },
+        {
+          "record_count": 5000,
+          "success_count": 5000,
+          "phases": {
+            "transform": {
+              "count": 5000,
+              "total_ms": 11546.33,
+              "percent": 75.9,
+              "avg_ms": 2.3093,
+              "median_ms": 2.3758,
+              "p95_ms": 4.6227,
+              "p99_ms": 6.9787,
+              "min_ms": 0.4685,
+              "max_ms": 13.8966,
+              "std_ms": 1.3873
+            },
+            "schema_init": {
+              "count": 5000,
+              "total_ms": 1068.24,
+              "percent": 7.0,
+              "avg_ms": 0.2136,
+              "median_ms": 0.1876,
+              "p95_ms": 0.3707,
+              "p99_ms": 0.5361,
+              "min_ms": 0.0867,
+              "max_ms": 1.899,
+              "std_ms": 0.0904
+            },
+            "serialize_pydantic": {
+              "count": 5000,
+              "total_ms": 1633.69,
+              "percent": 10.7,
+              "avg_ms": 0.3267,
+              "median_ms": 0.2994,
+              "p95_ms": 0.5517,
+              "p99_ms": 0.7775,
+              "min_ms": 0.138,
+              "max_ms": 2.8276,
+              "std_ms": 0.1307
+            },
+            "encrypt": {
+              "count": 5000,
+              "total_ms": 857.08,
+              "percent": 5.6,
+              "avg_ms": 0.1714,
+              "median_ms": 0.173,
+              "p95_ms": 0.3264,
+              "p99_ms": 0.4889,
+              "min_ms": 0.0255,
+              "max_ms": 0.7188,
+              "std_ms": 0.093
+            },
+            "serialize_final": {
+              "count": 5000,
+              "total_ms": 100.45,
+              "percent": 0.7,
+              "avg_ms": 0.0201,
+              "median_ms": 0.0175,
+              "p95_ms": 0.0352,
+              "p99_ms": 0.0516,
+              "min_ms": 0.0101,
+              "max_ms": 0.1184,
+              "std_ms": 0.0081
+            }
+          },
+          "total_pipeline_ms": 15205.79,
+          "throughput_rps": 328.8
+        }
+      ]
+    },
+    "TN5": {
+      "experiment": "TN5_parallelism",
+      "results": [
+        {
+          "record_count": 100,
+          "parallel": {
+            "total_ms": 192.6,
+            "throughput_rps": 519.2,
+            "success_count": 100,
+            "success_rate": 100.0,
+            "latency_avg_ms": 1.926,
+            "latency_median_ms": 1.9683,
+            "latency_p95_ms": 3.6725,
+            "latency_p99_ms": 5.7573,
+            "latency_min_ms": 0.4975,
+            "latency_max_ms": 5.7573,
+            "latency_std_ms": 1.0727
+          },
+          "sequential": {
+            "total_ms": 149.61,
+            "throughput_rps": 668.4,
+            "success_count": 100,
+            "success_rate": 100.0,
+            "latency_avg_ms": 1.4961,
+            "latency_median_ms": 1.4206,
+            "latency_p95_ms": 2.9076,
+            "latency_p99_ms": 4.8639,
+            "latency_min_ms": 0.0291,
+            "latency_max_ms": 4.8639,
+            "latency_std_ms": 1.1592
+          },
+          "speedup": 0.78
+        },
+        {
+          "record_count": 500,
+          "parallel": {
+            "total_ms": 1063.45,
+            "throughput_rps": 470.2,
+            "success_count": 500,
+            "success_rate": 100.0,
+            "latency_avg_ms": 2.1269,
+            "latency_median_ms": 2.2018,
+            "latency_p95_ms": 3.8249,
+            "latency_p99_ms": 6.9495,
+            "latency_min_ms": 0.4414,
+            "latency_max_ms": 14.0521,
+            "latency_std_ms": 1.3322
+          },
+          "sequential": {
+            "total_ms": 782.69,
+            "throughput_rps": 638.8,
+            "success_count": 500,
+            "success_rate": 100.0,
+            "latency_avg_ms": 1.5654,
+            "latency_median_ms": 1.6983,
+            "latency_p95_ms": 3.629,
+            "latency_p99_ms": 4.8993,
+            "latency_min_ms": 0.029,
+            "latency_max_ms": 6.3474,
+            "latency_std_ms": 1.2823
+          },
+          "speedup": 0.74
+        },
+        {
+          "record_count": 1000,
+          "parallel": {
+            "total_ms": 2288.63,
+            "throughput_rps": 436.9,
+            "success_count": 1000,
+            "success_rate": 100.0,
+            "latency_avg_ms": 2.2886,
+            "latency_median_ms": 2.3841,
+            "latency_p95_ms": 4.932,
+            "latency_p99_ms": 7.3459,
+            "latency_min_ms": 0.4349,
+            "latency_max_ms": 15.4869,
+            "latency_std_ms": 1.4812
+          },
+          "sequential": {
+            "total_ms": 1618.8,
+            "throughput_rps": 617.7,
+            "success_count": 1000,
+            "success_rate": 100.0,
+            "latency_avg_ms": 1.6188,
+            "latency_median_ms": 1.8119,
+            "latency_p95_ms": 3.6733,
+            "latency_p99_ms": 5.8183,
+            "latency_min_ms": 0.0283,
+            "latency_max_ms": 9.5499,
+            "latency_std_ms": 1.3379
+          },
+          "speedup": 0.71
+        },
+        {
+          "record_count": 2000,
+          "parallel": {
+            "total_ms": 4349.04,
+            "throughput_rps": 459.9,
+            "success_count": 2000,
+            "success_rate": 100.0,
+            "latency_avg_ms": 2.1745,
+            "latency_median_ms": 2.2573,
+            "latency_p95_ms": 4.2537,
+            "latency_p99_ms": 6.2178,
+            "latency_min_ms": 0.4425,
+            "latency_max_ms": 10.9902,
+            "latency_std_ms": 1.2947
+          },
+          "sequential": {
+            "total_ms": 3217.23,
+            "throughput_rps": 621.7,
+            "success_count": 2000,
+            "success_rate": 100.0,
+            "latency_avg_ms": 1.6086,
+            "latency_median_ms": 1.7201,
+            "latency_p95_ms": 3.7946,
+            "latency_p99_ms": 5.6453,
+            "latency_min_ms": 0.0289,
+            "latency_max_ms": 9.844,
+            "latency_std_ms": 1.3434
+          },
+          "speedup": 0.74
+        },
+        {
+          "record_count": 5000,
+          "parallel": {
+            "total_ms": 10479.89,
+            "throughput_rps": 477.1,
+            "success_count": 5000,
+            "success_rate": 100.0,
+            "latency_avg_ms": 2.096,
+            "latency_median_ms": 2.147,
+            "latency_p95_ms": 4.0759,
+            "latency_p99_ms": 6.9616,
+            "latency_min_ms": 0.4443,
+            "latency_max_ms": 14.0367,
+            "latency_std_ms": 1.3036
+          },
+          "sequential": {
+            "total_ms": 8023.31,
+            "throughput_rps": 623.2,
+            "success_count": 5000,
+            "success_rate": 100.0,
+            "latency_avg_ms": 1.6047,
+            "latency_median_ms": 1.6519,
+            "latency_p95_ms": 3.7545,
+            "latency_p99_ms": 5.6957,
+            "latency_min_ms": 0.0284,
+            "latency_max_ms": 10.8913,
+            "latency_std_ms": 1.3515
+          },
+          "speedup": 0.77
+        },
+        {
+          "record_count": 10000,
+          "parallel": {
+            "total_ms": 22547.29,
+            "throughput_rps": 443.5,
+            "success_count": 10000,
+            "success_rate": 100.0,
+            "latency_avg_ms": 2.2547,
+            "latency_median_ms": 2.3038,
+            "latency_p95_ms": 4.5688,
+            "latency_p99_ms": 7.093,
+            "latency_min_ms": 0.4398,
+            "latency_max_ms": 21.7796,
+            "latency_std_ms": 1.4389
+          },
+          "sequential": {
+            "total_ms": 15966.17,
+            "throughput_rps": 626.3,
+            "success_count": 10000,
+            "success_rate": 100.0,
+            "latency_avg_ms": 1.5966,
+            "latency_median_ms": 1.6922,
+            "latency_p95_ms": 3.7212,
+            "latency_p99_ms": 5.4548,
+            "latency_min_ms": 0.0269,
+            "latency_max_ms": 16.3462,
+            "latency_std_ms": 1.3222
+          },
+          "speedup": 0.71
+        }
+      ]
+    }
+  }
+}

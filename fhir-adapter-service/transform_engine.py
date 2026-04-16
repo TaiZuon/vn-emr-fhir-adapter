@@ -138,7 +138,17 @@ class TransformEngine:
                         # Debezium date in epoch days
                         final_val = (datetime.date(1970, 1, 1) + datetime.timedelta(days=val)).isoformat()
                 elif isinstance(val, str):
-                    final_val = val
+                    # QĐ-130 format: yyyymmddHHMM (12 chars) or yyyymmdd (8 chars)
+                    if len(val) == 12 and val.isdigit():
+                        date_part = f"{val[:4]}-{val[4:6]}-{val[6:8]}"
+                        if val[8:12] == "0000":
+                            final_val = date_part
+                        else:
+                            final_val = f"{date_part}T{val[8:10]}:{val[10:12]}:00+07:00"
+                    elif len(val) == 8 and val.isdigit():
+                        final_val = f"{val[:4]}-{val[4:6]}-{val[6:8]}"
+                    else:
+                        final_val = val
 
             self._set_nested_attr(resource, rule["target"], final_val)
         
