@@ -8,11 +8,11 @@ down:
 # Lệnh "Xây lại từ đầu"
 reset:
 	docker compose down -v
-	sudo rm -rf ./infrastructure/postgres_data/*
-	sudo rm -rf ./infrastructure/mongo_data/*
-	sudo rm -rf ./infrastructure/debezium_data/*
+	sudo rm -rf ./src/infrastructure/postgres_data/*
+	sudo rm -rf ./src/infrastructure/mongo_data/*
+	sudo rm -rf ./src/infrastructure/debezium_data/*
 	docker compose up -d
-	@echo "🔥 Đã dọn sạch và khởi động lại hệ thống!"
+	@echo "Đã dọn sạch và khởi động lại hệ thống!"
 
 logs:
 	docker compose logs -f
@@ -32,13 +32,14 @@ download-validator:
 	fi
 
 validate:
-        cd src/fhir-adapter-service && python3 validate_fhir_batch.py --compare --output validation_report.json
+	cd src/fhir-adapter-service && python3 validate_fhir_batch.py --compare --output validation_report.json
 
 validate-pydantic:
-        cd src/fhir-adapter-service && python3 validate_fhir_batch.py --pydantic-only
+	cd src/fhir-adapter-service && python3 validate_fhir_batch.py --pydantic-only
 
 validate-hl7:
-        cd src/fhir-adapter-service && python3 validate_fhir_batch.py --output validation_report.json
+	cd src/fhir-adapter-service && python3 validate_fhir_batch.py --output validation_report.json
+
 # HAPI FHIR Server
 hapi-ui:
 	@echo "HAPI FHIR UI: http://localhost:8080"
@@ -47,22 +48,23 @@ hapi-ui:
 
 # Benchmark
 benchmark:
-        cd src/fhir-adapter-service && python3 benchmark.py --output results/ --push
+	cd src/fhir-adapter-service && python3 benchmark.py --output results/ --push
 
 benchmark-1:
-        cd src/fhir-adapter-service && python3 benchmark.py -e 1 --output results/ --push
+	cd src/fhir-adapter-service && python3 benchmark.py -e 1 --output results/ --push
 
 benchmark-2:
-        cd src/fhir-adapter-service && python3 benchmark.py -e 2 --output results/ --push
+	cd src/fhir-adapter-service && python3 benchmark.py -e 2 --output results/ --push
 
 benchmark-3:
-        cd src/fhir-adapter-service && python3 benchmark.py -e 3 --output results/ --push
+	cd src/fhir-adapter-service && python3 benchmark.py -e 3 --output results/ --push
 
 benchmark-4:
-        cd src/fhir-adapter-service && python3 benchmark.py -e 4 --output results/ --push
+	cd src/fhir-adapter-service && python3 benchmark.py -e 4 --output results/ --push
 
 benchmark-5:
-        cd src/fhir-adapter-service && python3 benchmark.py -e 5 --output results/ --push
+	cd src/fhir-adapter-service && python3 benchmark.py -e 5 --output results/ --push
+
 # Grafana
 grafana:
 	@echo "Grafana:      http://localhost:3000  (admin/admin)"
