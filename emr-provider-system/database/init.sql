@@ -64,7 +64,7 @@ CREATE TABLE chi_tiet_thuoc (
     ten_thuoc VARCHAR(1024),
     don_vi_tinh VARCHAR(50),
     ham_luong VARCHAR(1024),
-    duong_dung VARCHAR(4),
+    duong_dung VARCHAR(50),
     lieu_dung VARCHAR(1024),
     so_luong DECIMAL(15,3),
     don_gia DECIMAL(15,3),

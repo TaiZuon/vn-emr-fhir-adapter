@@ -364,7 +364,7 @@ def experiment_1_correctness(count: int = 1000) -> Dict:
     hl7_jar = os.path.join(os.path.dirname(__file__) or ".", "validator_cli.jar")
     if os.path.exists(hl7_jar):
         hl7 = HL7ValidatorCLI(hl7_jar)
-        sample_size = min(20, len(fhir_resources))
+        sample_size = min(1000, len(fhir_resources))
         log.info(f"\n  Level 2: HL7 FHIR Validator CLI — Batch ({sample_size} resources, 1 JVM call)")
         hl7_sample = fhir_resources[:sample_size]
 
@@ -1015,6 +1015,20 @@ def push_results_to_prometheus(all_results: Dict):
         for rt, data in tn1["by_resource_type"].items():
             g_correct.labels(resource_type=rt).set(data.get("rate", 0))
 
+    if "pydantic_avg_ms" in tn1 or "hl7_cli" in tn1:
+        g_val_speed = Gauge('benchmark_validation_avg_ms', 'Avg validation time (ms/resource)',
+                            ['method'], registry=registry)
+        if "pydantic_avg_ms" in tn1:
+            g_val_speed.labels(method="Pydantic").set(tn1["pydantic_avg_ms"])
+        hl7 = tn1.get("hl7_cli", {})
+        if "avg_ms" in hl7:
+            g_val_speed.labels(method="HL7 CLI").set(hl7["avg_ms"])
+
+    if "speedup_pydantic_vs_hl7" in tn1:
+        g_speedup_val = Gauge('benchmark_validation_speedup', 'Pydantic vs HL7 CLI speedup (x)',
+                              registry=registry)
+        g_speedup_val.set(tn1["speedup_pydantic_vs_hl7"])
+
     # ── TN2: Performance ──
     tn2 = all_results.get("experiments", {}).get("TN2", {})
     if "results" in tn2:
@@ -1046,11 +1060,20 @@ def push_results_to_prometheus(all_results: Dict):
                         ['record_count'], registry=registry)
         g_e_dec = Gauge('benchmark_decrypt_avg_ms', 'Avg decrypt per resource (ms)',
                         ['record_count'], registry=registry)
+        g_e_tp = Gauge('benchmark_encryption_throughput', 'Throughput with/without encryption (rec/s)',
+                       ['mode', 'record_count'], registry=registry)
         for row in tn3["results"]:
             rc = str(row["input_records"])
             g_e_oh.labels(record_count=rc).set(row.get("overhead_percent", 0))
             g_e_enc.labels(record_count=rc).set(row.get("encrypt_per_resource", {}).get("avg", 0))
             g_e_dec.labels(record_count=rc).set(row.get("decrypt_per_resource", {}).get("avg", 0))
+            n = row.get("fhir_resources", row.get("input_records", 1))
+            no_ms = row.get("no_encryption_ms", 0)
+            enc_ms = row.get("with_encryption_ms", 0)
+            if no_ms > 0:
+                g_e_tp.labels(mode="no_enc", record_count=rc).set(round(n * 1000 / no_ms, 1))
+            if enc_ms > 0:
+                g_e_tp.labels(mode="enc", record_count=rc).set(round(n * 1000 / enc_ms, 1))
 
     # ── TN4: Pipeline Breakdown ──
     tn4 = all_results.get("experiments", {}).get("TN4", {})
@@ -1159,8 +1182,8 @@ if __name__ == "__main__":
     )
     parser.add_argument("--experiment", "-e", type=int, nargs="+",
                         help="Chọn thí nghiệm (1-5). Mặc định: tất cả.")
-    parser.add_argument("--output", "-o", type=str, default=None,
-                        help="Thư mục xuất kết quả JSON.")
+    parser.add_argument("--output", "-o", type=str, default="results",
+                        help="Thư mục xuất kết quả JSON (mặc định: results/).")
     parser.add_argument("--push", "-p", action="store_true",
                         help="Đẩy kết quả lên Prometheus Pushgateway.")
     args = parser.parse_args()

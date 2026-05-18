@@ -92,7 +92,7 @@ class ChiTietThuoc(Base):
     ten_thuoc = Column(String(1024))
     don_vi_tinh = Column(String(50))
     ham_luong = Column(String(1024))
-    duong_dung = Column(String(4))
+    duong_dung = Column(String(50))
     lieu_dung = Column(String(1024))
     so_luong = Column(Numeric(15, 3))
     don_gia = Column(Numeric(15, 3))

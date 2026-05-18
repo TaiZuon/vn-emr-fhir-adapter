@@ -84,7 +84,7 @@ class ChiTietThuocBase(BaseModel):
     ten_thuoc: Optional[str] = Field(None, max_length=1024)
     don_vi_tinh: Optional[str] = Field(None, max_length=50)
     ham_luong: Optional[str] = Field(None, max_length=1024)
-    duong_dung: Optional[str] = Field(None, max_length=4)
+    duong_dung: Optional[str] = Field(None, max_length=50)
     lieu_dung: Optional[str] = Field(None, max_length=1024)
     so_luong: Optional[float] = None
     don_gia: Optional[float] = None

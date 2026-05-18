@@ -129,7 +129,7 @@ def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
     doctors = []
     for i in range(num_practitioners):
         doc = models.NhanVienYTe(
-            ma_bac_si=f"BS{str(i).zfill(4)}{random.randint(100,999)}",
+            ma_bac_si=f"BS{str(uuid.uuid4()).replace('-','')[:10].upper()}",
             ho_ten=fake.name(),
             chuyen_khoa=random.choice(["Nội khoa", "Ngoại khoa", "Nhi khoa", "Sản khoa", "Mắt", "Tai mũi họng"]),
             so_dien_thoai=fake.phone_number()[:10]
@@ -193,6 +193,7 @@ def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
                 ma_dkbd="01001",
                 ma_benh=ma_benh,
                 ten_benh=ten_benh,
+                ket_qua_dtri=random.choice([1, 2, 3]),
                 tinh_trang_rv=random.choice([1, 2, 3, 4])
             )
             db.add(encounter)
