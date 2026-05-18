@@ -18,7 +18,7 @@ logs:
 	docker compose logs -f
 
 # HL7 FHIR Validator CLI
-VALIDATOR_JAR = fhir-adapter-service/validator_cli.jar
+VALIDATOR_JAR = src/fhir-adapter-service/validator_cli.jar
 VALIDATOR_VERSION = 6.4.0
 VALIDATOR_URL = https://github.com/hapifhir/org.hl7.fhir.core/releases/download/$(VALIDATOR_VERSION)/validator_cli.jar
 
@@ -32,14 +32,13 @@ download-validator:
 	fi
 
 validate:
-	cd fhir-adapter-service && python3 validate_fhir_batch.py --compare --output validation_report.json
+        cd src/fhir-adapter-service && python3 validate_fhir_batch.py --compare --output validation_report.json
 
 validate-pydantic:
-	cd fhir-adapter-service && python3 validate_fhir_batch.py --pydantic-only
+        cd src/fhir-adapter-service && python3 validate_fhir_batch.py --pydantic-only
 
 validate-hl7:
-	cd fhir-adapter-service && python3 validate_fhir_batch.py --output validation_report.json
-
+        cd src/fhir-adapter-service && python3 validate_fhir_batch.py --output validation_report.json
 # HAPI FHIR Server
 hapi-ui:
 	@echo "HAPI FHIR UI: http://localhost:8080"
@@ -48,23 +47,22 @@ hapi-ui:
 
 # Benchmark
 benchmark:
-	cd fhir-adapter-service && python3 benchmark.py --output results/ --push
+        cd src/fhir-adapter-service && python3 benchmark.py --output results/ --push
 
 benchmark-1:
-	cd fhir-adapter-service && python3 benchmark.py -e 1 --output results/ --push
+        cd src/fhir-adapter-service && python3 benchmark.py -e 1 --output results/ --push
 
 benchmark-2:
-	cd fhir-adapter-service && python3 benchmark.py -e 2 --output results/ --push
+        cd src/fhir-adapter-service && python3 benchmark.py -e 2 --output results/ --push
 
 benchmark-3:
-	cd fhir-adapter-service && python3 benchmark.py -e 3 --output results/ --push
+        cd src/fhir-adapter-service && python3 benchmark.py -e 3 --output results/ --push
 
 benchmark-4:
-	cd fhir-adapter-service && python3 benchmark.py -e 4 --output results/ --push
+        cd src/fhir-adapter-service && python3 benchmark.py -e 4 --output results/ --push
 
 benchmark-5:
-	cd fhir-adapter-service && python3 benchmark.py -e 5 --output results/ --push
-
+        cd src/fhir-adapter-service && python3 benchmark.py -e 5 --output results/ --push
 # Grafana
 grafana:
 	@echo "Grafana:      http://localhost:3000  (admin/admin)"
