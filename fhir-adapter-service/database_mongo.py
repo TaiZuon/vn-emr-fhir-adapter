@@ -13,7 +13,7 @@ class FHIRStore:
         if self.hapi_enabled:
             print(f" [connected] HAPI FHIR Server sẵn sàng (dual-write mode)")
         else:
-            print(f" [info] HAPI FHIR Server không khả dụng (MongoDB-only mode)")
+            print(f" [info] HAPI FHIR Server chưa sẵn sàng (sẽ retry mỗi lần lưu)")
 
     def save_resource(self, resource_obj):
         """
@@ -43,7 +43,9 @@ class FHIRStore:
             inserted_id = resource_data['_id']
             print(f" [💾] MongoDB: Đã lưu {resource_type} với ID: {inserted_id}")
 
-            # 2. Gửi lên HAPI FHIR Server (nếu available)
+            # 2. Gửi lên HAPI FHIR Server (nếu available, retry nếu ban đầu chưa sẵn sàng)
+            if not self.hapi_enabled:
+                self.hapi_enabled = hapi_client.is_available()
             if self.hapi_enabled:
                 hapi_id = hapi_client.save_resource(resource_obj)
                 if hapi_id:

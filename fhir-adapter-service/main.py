@@ -104,8 +104,14 @@ def process_batch(channel, batch, delivery_tags, batch_properties=None):
             mongo_id = fhir_store.save_resource(fhir_resource)
 
             if mongo_id:
-                # Lấy EMR key: ưu tiên ma_lk (dot_dieu_tri), rồi id (các bảng khác)
-                emr_key = data.get('ma_lk', data.get('id'))
+                # Lấy EMR key theo từng loại resource:
+                # - Practitioner: dùng ma_bac_si (khóa được tra cứu trong transform rules)
+                # - Encounter: dùng ma_lk (primary key)
+                # - Còn lại: dùng id (integer PK)
+                if res_type == 'Practitioner':
+                    emr_key = data.get('ma_bac_si', data.get('id'))
+                else:
+                    emr_key = data.get('ma_lk', data.get('id'))
                 ref_manager.add_mapping(res_type, emr_key, mongo_id)
                 
                 # Khi lưu Encounter, tạo thêm mapping ngược EncounterPatient

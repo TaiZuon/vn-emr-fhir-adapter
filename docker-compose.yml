@@ -75,18 +75,29 @@ services:
     networks:
       - default
 
+  # Pushgateway — nhận metrics từ benchmark batch jobs
+  pushgateway:
+    image: prom/pushgateway:latest
+    container_name: fhir_pushgateway
+    restart: always
+    ports:
+      - "9091:9091"
+    networks:
+      - default
+
   prometheus:
-      image: prom/prometheus:latest
-      container_name: fhir_prometheus
-      extra_hosts:
-        - "host.docker.internal:host-gateway"
-      volumes:
-        - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      ports:
-        - "9090:9090"
-      # Quan trọng: Prometheus cần nằm chung mạng với các dịch vụ khác
-      networks:
-        - default
+    image: prom/prometheus:latest
+    container_name: fhir_prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - pushgateway
+    networks:
+      - default
 
   grafana:
     image: grafana/grafana:latest
@@ -95,6 +106,11 @@ services:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - ./infrastructure/grafana/provisioning:/etc/grafana/provisioning
+      - ./infrastructure/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
     networks:
       - default
 

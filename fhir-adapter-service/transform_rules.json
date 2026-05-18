@@ -62,7 +62,7 @@
       { "source": "ma_thuoc", "target": "medication.concept.coding[0]", "action": "terminology_lookup", "system": "vn-emr-medication-map" },
       { "source": "ten_thuoc", "target": "medication.concept.text", "action": "direct" },
       { "source": "don_vi_tinh", "target": "dispenseRequest.quantity.unit", "action": "direct" },
-      { "source": "ham_luong", "target": "medication.concept.text", "action": "direct" },
+      { "source": "ham_luong", "target": "dosageInstruction[0].doseAndRate[0].doseQuantity.unit", "action": "direct" },
       { "source": "duong_dung", "target": "dosageInstruction[0].route.text", "action": "direct" },
       { "source": "lieu_dung", "target": "dosageInstruction[0].text", "action": "direct" },
       { "source": "so_luong", "target": "dispenseRequest.quantity.value", "action": "float" },
@@ -105,7 +105,8 @@
       { "source": "mo_ta", "target": "note[0].text", "action": "direct" },
       { "source": "ket_luan", "target": "interpretation[0].text", "action": "direct" },
       { "source": "ngay_kq", "target": "effectiveDateTime", "action": "date" },
-      { "source": "dot_dieu_tri_id", "target": "encounter.reference", "action": "reference", "ref_type": "Encounter" }
+      { "source": "dot_dieu_tri_id", "target": "encounter.reference", "action": "reference", "ref_type": "Encounter" },
+      { "source": "dot_dieu_tri_id", "target": "subject.reference", "action": "reference", "ref_type": "EncounterPatient" }
     ]
   },
   "dien_bien_lam_sang": {

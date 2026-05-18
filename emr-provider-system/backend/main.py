@@ -129,7 +129,7 @@ def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
     doctors = []
     for i in range(num_practitioners):
         doc = models.NhanVienYTe(
-            ma_bac_si=f"BS{str(i).zfill(4)}{random.randint(100,999)}",
+            ma_bac_si=f"BS{str(uuid.uuid4()).replace('-','')[:10].upper()}",
             ho_ten=fake.name(),
             chuyen_khoa=random.choice(["Nội khoa", "Ngoại khoa", "Nhi khoa", "Sản khoa", "Mắt", "Tai mũi họng"]),
             so_dien_thoai=fake.phone_number()[:10]
@@ -139,12 +139,17 @@ def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
     db.commit()
 
     created_patients = 0
+    # Helper: chuyển datetime sang yyyymmddHHMM
+    def to_qd130(dt):
+        return dt.strftime("%Y%m%d%H%M")
+
     # Bệnh nhân
     for i in range(count):
+        dob = fake.date_of_birth(minimum_age=1, maximum_age=90)
         patient = models.BenhNhan(
             ma_bn=f"BN{str(uuid.uuid4())[:8].upper()}",
             ho_ten=fake.name(),
-            ngay_sinh=fake.date_of_birth(minimum_age=1, maximum_age=90),
+            ngay_sinh=dob.strftime("%Y%m%d") + "0000",
             gioi_tinh=random.choice([1, 2, 3]),
             dia_chi=fake.address(),
             cccd=f"0{random.randint(10000000000, 99999999999)}",
@@ -182,12 +187,13 @@ def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
                 ma_lk=f"LK{str(uuid.uuid4()).replace('-', '').upper()[:20]}",
                 benh_nhan_id=patient.id,
                 ma_bac_si=dr.ma_bac_si,
-                ngay_vao=ngay_vao,
-                ngay_ra=ngay_ra,
+                ngay_vao=to_qd130(ngay_vao),
+                ngay_ra=to_qd130(ngay_ra),
                 ma_the=f"GD479{random.randint(1000000000, 9999999999)}",
                 ma_dkbd="01001",
                 ma_benh=ma_benh,
                 ten_benh=ten_benh,
+                ket_qua_dtri=random.choice([1, 2, 3]),
                 tinh_trang_rv=random.choice([1, 2, 3, 4])
             )
             db.add(encounter)
@@ -228,7 +234,7 @@ def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
                     don_gia=gia,
                     thanh_tien=sl * gia,
                     ma_bac_si=dr.ma_bac_si,
-                    ngay_yl=ngay_vao
+                    ngay_yl=to_qd130(ngay_vao)
                 )
                 db.add(thuoc)
         
@@ -258,8 +264,8 @@ def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
                     don_gia=gia,
                     thanh_tien=sl * gia,
                     ma_bac_si=dr.ma_bac_si,
-                    ngay_yl=ngay_vao,
-                    ngay_kq=ngay_ra
+                    ngay_yl=to_qd130(ngay_vao),
+                    ngay_kq=to_qd130(ngay_ra)
                 )
                 db.add(dv)
 
@@ -280,7 +286,7 @@ def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
                     ten_chi_so=ten_chi_so,
                     gia_tri=f"{round(random.uniform(lo, hi), 2)} {unit}",
                     ket_luan=random.choice(["Bình thường", "Cao", "Thấp", "Bất thường"]),
-                    ngay_kq=ngay_ra
+                    ngay_kq=to_qd130(ngay_ra)
                 )
                 db.add(cls)
 
@@ -297,7 +303,7 @@ def seed_complex_workflow(count: int, db: Session = Depends(get_db)):
                     ]),
                     hoi_chan=random.choice([None, "Hội chẩn khoa Nội: Tiếp tục điều trị nội khoa"]),
                     phau_thuat=random.choice([None, None, "Cắt ruột thừa nội soi"]),
-                    ngay_yl=ngay_vao + timedelta(days=db_stt - 1)
+                    ngay_yl=to_qd130(ngay_vao + timedelta(days=db_stt - 1))
                 )
                 db.add(dbls)
 
