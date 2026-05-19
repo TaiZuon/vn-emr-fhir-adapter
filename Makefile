@@ -8,9 +8,9 @@ down:
 # Lệnh "Xây lại từ đầu"
 reset:
 	docker compose down -v
-	sudo rm -rf ./src/infrastructure/postgres_data/*
-	sudo rm -rf ./src/infrastructure/mongo_data/*
-	sudo rm -rf ./src/infrastructure/debezium_data/*
+	find ./src/infrastructure/postgres_data -mindepth 1 -delete 2>/dev/null || true
+	find ./src/infrastructure/mongo_data -mindepth 1 -delete 2>/dev/null || true
+	find ./src/infrastructure/debezium_data -mindepth 1 -delete 2>/dev/null || true
 	docker compose up -d
 	@echo "Đã dọn sạch và khởi động lại hệ thống!"
 
