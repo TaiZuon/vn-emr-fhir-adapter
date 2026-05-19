@@ -6,12 +6,15 @@ down:
 	docker compose down -v
 
 # Lệnh "Xây lại từ đầu"
+# Khởi động theo thứ tự để tránh I/O spike trên ổ USB gây kernel panic
 reset:
-	docker compose down -v
-	find ./src/infrastructure/postgres_data -mindepth 1 -delete 2>/dev/null || true
-	find ./src/infrastructure/mongo_data -mindepth 1 -delete 2>/dev/null || true
-	find ./src/infrastructure/debezium_data -mindepth 1 -delete 2>/dev/null || true
-	docker compose up -d
+        docker compose down -v
+        find ./src/infrastructure/postgres_data -mindepth 1 -delete 2>/dev/null || true
+        find ./src/infrastructure/mongo_data -mindepth 1 -delete 2>/dev/null || true
+        find ./src/infrastructure/debezium_data -mindepth 1 -delete 2>/dev/null || true
+        docker compose up -d emr-db rabbitmq fhir-store
+        @echo "Chờ DB khởi động ổn định trước khi bật các service còn lại..."
+        sleep 15
 	@echo "Đã dọn sạch và khởi động lại hệ thống!"
 
 logs:
