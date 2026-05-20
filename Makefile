@@ -1,4 +1,3 @@
-# Định nghĩa các lệnh tắt
 up:
 	docker compose up -d
 
@@ -8,13 +7,13 @@ down:
 # Lệnh "Xây lại từ đầu"
 # Khởi động theo thứ tự để tránh I/O spike trên ổ USB gây kernel panic
 reset:
-        docker compose down -v
-        find ./src/infrastructure/postgres_data -mindepth 1 -delete 2>/dev/null || true
-        find ./src/infrastructure/mongo_data -mindepth 1 -delete 2>/dev/null || true
-        find ./src/infrastructure/debezium_data -mindepth 1 -delete 2>/dev/null || true
-        docker compose up -d emr-db rabbitmq fhir-store
-        @echo "Chờ DB khởi động ổn định trước khi bật các service còn lại..."
-        sleep 15
+	docker compose down -v
+	find ./src/infrastructure/postgres_data -mindepth 1 -delete 2>/dev/null || true
+	find ./src/infrastructure/mongo_data -mindepth 1 -delete 2>/dev/null || true
+	find ./src/infrastructure/debezium_data -mindepth 1 -delete 2>/dev/null || true
+	docker compose up -d emr-db rabbitmq fhir-store
+	@echo "Chờ DB khởi động ổn định trước khi bật các service còn lại..."
+	sleep 15
 	@echo "Đã dọn sạch và khởi động lại hệ thống!"
 
 logs:
@@ -73,3 +72,12 @@ grafana:
 	@echo "Grafana:      http://localhost:3000  (admin/admin)"
 	@echo "Pushgateway:  http://localhost:9091"
 	@echo "Prometheus:   http://localhost:9090"
+
+# Push kết quả benchmark cũ lên Grafana
+# Dùng: make push-results FILE=src/fhir-adapter-service/results/benchmark_xxx.json
+# Hoặc: make push-latest  (tự chọn file mới nhất)
+push-results:
+	cd src/fhir-adapter-service && python3 push_results.py $(if $(FILE),$(CURDIR)/$(FILE),)
+
+push-latest:
+	cd src/fhir-adapter-service && python3 push_results.py
