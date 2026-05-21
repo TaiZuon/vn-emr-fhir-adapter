@@ -74,4 +74,7 @@ temp/
 *.tmp
 *.bak
 
+# Copyrighted book PDFs in references (listed by citation in references/03_Khac/README.md)
+references/03_Khac/*.pdf
+
 
