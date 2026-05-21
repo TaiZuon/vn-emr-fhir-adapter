@@ -1,4 +1,3 @@
-# Định nghĩa các lệnh tắt
 up:
 	docker compose up -d
 
@@ -6,19 +5,23 @@ down:
 	docker compose down -v
 
 # Lệnh "Xây lại từ đầu"
+# Khởi động theo thứ tự để tránh I/O spike trên ổ USB gây kernel panic
 reset:
 	docker compose down -v
-	sudo rm -rf ./infrastructure/postgres_data/*
-	sudo rm -rf ./infrastructure/mongo_data/*
-	sudo rm -rf ./infrastructure/debezium_data/*
+	find ./src/infrastructure/postgres_data -mindepth 1 -delete 2>/dev/null || true
+	find ./src/infrastructure/mongo_data -mindepth 1 -delete 2>/dev/null || true
+	find ./src/infrastructure/debezium_data -mindepth 1 -delete 2>/dev/null || true
+	docker compose up -d emr-db rabbitmq fhir-store
+	@echo "Chờ DB khởi động ổn định trước khi bật các service còn lại..."
+	sleep 15
 	docker compose up -d
-	@echo "🔥 Đã dọn sạch và khởi động lại hệ thống!"
+	@echo "Đã dọn sạch và khởi động lại hệ thống!"
 
 logs:
 	docker compose logs -f
 
 # HL7 FHIR Validator CLI
-VALIDATOR_JAR = fhir-adapter-service/validator_cli.jar
+VALIDATOR_JAR = src/fhir-adapter-service/validator_cli.jar
 VALIDATOR_VERSION = 6.4.0
 VALIDATOR_URL = https://github.com/hapifhir/org.hl7.fhir.core/releases/download/$(VALIDATOR_VERSION)/validator_cli.jar
 
@@ -32,13 +35,13 @@ download-validator:
 	fi
 
 validate:
-	cd fhir-adapter-service && python3 validate_fhir_batch.py --compare --output validation_report.json
+	cd src/fhir-adapter-service && python3 validate_fhir_batch.py --compare --output validation_report.json
 
 validate-pydantic:
-	cd fhir-adapter-service && python3 validate_fhir_batch.py --pydantic-only
+	cd src/fhir-adapter-service && python3 validate_fhir_batch.py --pydantic-only
 
 validate-hl7:
-	cd fhir-adapter-service && python3 validate_fhir_batch.py --output validation_report.json
+	cd src/fhir-adapter-service && python3 validate_fhir_batch.py --output validation_report.json
 
 # HAPI FHIR Server
 hapi-ui:
@@ -48,25 +51,34 @@ hapi-ui:
 
 # Benchmark
 benchmark:
-	cd fhir-adapter-service && python3 benchmark.py --output results/ --push
+	cd src/fhir-adapter-service && python3 benchmark.py --output results/ --push
 
 benchmark-1:
-	cd fhir-adapter-service && python3 benchmark.py -e 1 --output results/ --push
+	cd src/fhir-adapter-service && python3 benchmark.py -e 1 --output results/ --push
 
 benchmark-2:
-	cd fhir-adapter-service && python3 benchmark.py -e 2 --output results/ --push
+	cd src/fhir-adapter-service && python3 benchmark.py -e 2 --output results/ --push
 
 benchmark-3:
-	cd fhir-adapter-service && python3 benchmark.py -e 3 --output results/ --push
+	cd src/fhir-adapter-service && python3 benchmark.py -e 3 --output results/ --push
 
 benchmark-4:
-	cd fhir-adapter-service && python3 benchmark.py -e 4 --output results/ --push
+	cd src/fhir-adapter-service && python3 benchmark.py -e 4 --output results/ --push
 
 benchmark-5:
-	cd fhir-adapter-service && python3 benchmark.py -e 5 --output results/ --push
+	cd src/fhir-adapter-service && python3 benchmark.py -e 5 --output results/ --push
 
 # Grafana
 grafana:
 	@echo "Grafana:      http://localhost:3000  (admin/admin)"
 	@echo "Pushgateway:  http://localhost:9091"
 	@echo "Prometheus:   http://localhost:9090"
+
+# Push kết quả benchmark cũ lên Grafana
+# Dùng: make push-results FILE=src/fhir-adapter-service/results/benchmark_xxx.json
+# Hoặc: make push-latest  (tự chọn file mới nhất)
+push-results:
+	cd src/fhir-adapter-service && python3 push_results.py $(if $(FILE),$(CURDIR)/$(FILE),)
+
+push-latest:
+	cd src/fhir-adapter-service && python3 push_results.py

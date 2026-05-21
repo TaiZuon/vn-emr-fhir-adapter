@@ -12,8 +12,9 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./infrastructure/postgres_data:/var/lib/postgresql/data
-      - ./emr-provider-system/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./src/infrastructure/postgres_data:/var/lib/postgresql/data
+      - ./src/emr-provider-system/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./src/emr-provider-system/database/99-pg-hba.sh:/docker-entrypoint-initdb.d/99-pg-hba.sh
 
   # Message Broker (RabbitMQ)
   rabbitmq:
@@ -35,7 +36,7 @@ services:
     ports:
       - "27017:27017"
     volumes:
-      - ./infrastructure/mongo_data:/data/db
+      - ./src/infrastructure/mongo_data:/data/db
 
   debezium:
     image: quay.io/debezium/server:2.4
@@ -45,8 +46,8 @@ services:
       - emr-db
       - rabbitmq
     volumes:
-      - ./infrastructure/debezium_conf:/debezium/conf
-      - ./infrastructure/debezium_data:/debezium/data
+      - ./src/infrastructure/debezium_conf:/debezium/conf
+      - ./src/infrastructure/debezium_data:/debezium/data
 
   # Công cụ xem dữ liệu MongoDB 
   mongo-express:
@@ -91,7 +92,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./src/prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - "9090:9090"
     depends_on:
@@ -106,9 +107,10 @@ services:
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_DEFAULT_THEME=light
     volumes:
-      - ./infrastructure/grafana/provisioning:/etc/grafana/provisioning
-      - ./infrastructure/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./src/infrastructure/grafana/provisioning:/etc/grafana/provisioning
+      - ./src/infrastructure/grafana/dashboards:/var/lib/grafana/dashboards
     depends_on:
       - prometheus
     networks:
