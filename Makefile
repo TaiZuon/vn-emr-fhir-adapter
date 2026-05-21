@@ -14,6 +14,7 @@ reset:
 	docker compose up -d emr-db rabbitmq fhir-store
 	@echo "Chờ DB khởi động ổn định trước khi bật các service còn lại..."
 	sleep 15
+	docker compose up -d
 	@echo "Đã dọn sạch và khởi động lại hệ thống!"
 
 logs:
